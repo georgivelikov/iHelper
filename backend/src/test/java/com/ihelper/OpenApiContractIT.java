@@ -42,7 +42,9 @@ class OpenApiContractIT extends AbstractIT {
 			Files.writeString(SNAPSHOT, actual, StandardCharsets.UTF_8);
 		}
 
-		String expected = Files.readString(SNAPSHOT, StandardCharsets.UTF_8);
+		String expected = Files.readString(SNAPSHOT, StandardCharsets.UTF_8).replace("
+", "
+");
 		assertThat(actual)
 			.as("OpenAPI contract changed. If intended, rerun with -Dopenapi.update=true and commit the snapshot.")
 			.isEqualTo(expected);

@@ -19,7 +19,7 @@ export function Filters({ status, priority, sort, q, onStatus, onPriority, onSor
       <input
         type="search"
         aria-label="Search tasks"
-        placeholder="Search…"
+        placeholder="Search title and description…"
         value={q}
         onChange={(e) => onSearch(e.target.value)}
       />

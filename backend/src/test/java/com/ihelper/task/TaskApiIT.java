@@ -41,6 +41,20 @@ class TaskApiIT extends AbstractIT {
 	}
 
 	@Test
+	void searchMatchesTitleAndDescriptionIgnoringCase() {
+		String needle = unique("needle");
+		String inTitle = createTask(task("About " + needle));
+		Map<String, Object> withDescription = task(unique("plain title"));
+		withDescription.put("description", "Remember the " + needle.toUpperCase() + " details");
+		String inDescription = createTask(withDescription);
+		createTask(task(unique("unrelated")));
+
+		api().queryParam("q", needle).get("/api/v1/tasks").then().statusCode(200)
+			.body("total", equalTo(2))
+			.body("items.id", containsInAnyOrder(inTitle, inDescription));
+	}
+
+	@Test
 	void postWithSameClientUuidIsIdempotent() {
 		String id = UUID.randomUUID().toString();
 		String title = unique("idem");

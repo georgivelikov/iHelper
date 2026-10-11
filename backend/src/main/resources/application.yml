@@ -31,6 +31,23 @@ springdoc:
   api-docs:
     path: /v3/api-docs
 
+management:
+  endpoints:
+    web:
+      exposure:
+        # health only: no env, beans, metrics or heapdump on the web
+        include: health
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+
+logging:
+  level:
+    # request and token details are never logged; keep security internals at warning
+    org.springframework.security: WARN
+
 ihelper:
   cors:
     # comma separated; add the hosted web origin in the prod profile
@@ -89,4 +106,4 @@ ihelper:
     jwt-secret: ${IHELPER_JWT_SECRET}
     registration: ${IHELPER_REGISTRATION:invite}
     invite-code: ${IHELPER_INVITE_CODE:}
-    secure-cookie: true
+    secure-cookie: ${IHELPER_SECURE_COOKIE:true}

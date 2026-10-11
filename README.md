@@ -37,7 +37,13 @@ docker compose down          # keeps data; add -v to wipe it
 | Single jar | `cd backend && ./mvnw -Pbundle-frontend -DskipTests package`, then `java -jar target/ihelper-0.0.1-SNAPSHOT.jar` (needs Postgres: `docker compose up -d postgres`) | http://localhost:8080 |
 | Docker Compose | `docker compose --profile app up --build` (app + Postgres, data in the `ihelper-pgdata` volume) | http://localhost:8080 |
 
-The jar and the image serve the website and the API from one origin; Swagger UI is at `/swagger-ui`.
+The jar and the image serve the website and the API from one origin; Swagger UI is at `/swagger-ui` (off in `prod`).
+
+### Accounts
+Every task and category belongs to a user. In dev and tests anyone can create an account on the sign-in screen
+(`ihelper.auth.registration=open`). The hosted profile defaults to **invite-only**. Compose runs the real `prod`
+profile: copy `.env.example` to `.env` and set `IHELPER_JWT_SECRET` and `IHELPER_INVITE_CODE`.
+Configuration and operations are in [docs/RUNBOOK.md](docs/RUNBOOK.md).
 
 ## Test
 ```

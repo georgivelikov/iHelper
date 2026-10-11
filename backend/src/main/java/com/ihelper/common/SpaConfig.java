@@ -12,12 +12,12 @@ import org.springframework.web.servlet.resource.PathResourceResolver;
 
 /**
  * Serves the bundled React app from classpath:/static and falls back to index.html for client-side
- * routes, so deep links and reloads work. API, OpenAPI and Swagger paths are never rewritten.
+ * routes, so deep links and reloads work. API, OpenAPI, Swagger and actuator paths are never rewritten.
  */
 @Configuration
 public class SpaConfig implements WebMvcConfigurer {
 
-	private static final List<String> NOT_SPA = List.of("api/", "v3/", "swagger-ui");
+	private static final List<String> NOT_SPA = List.of("api/", "v3/", "swagger-ui", "actuator");
 
 	@Override
 	public void addResourceHandlers(ResourceHandlerRegistry registry) {

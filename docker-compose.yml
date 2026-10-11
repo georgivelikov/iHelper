@@ -26,11 +26,18 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    # Runs the real hosted configuration (prod profile). Copy .env.example to .env and set the secrets;
+    # without IHELPER_JWT_SECRET the app refuses to start (by design).
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ihelper
-      SPRING_DATASOURCE_USERNAME: ihelper
-      SPRING_DATASOURCE_PASSWORD: ihelper
-      SPRING_DOCKER_COMPOSE_ENABLED: "false"
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:postgresql://postgres:5432/ihelper
+      DB_USER: ihelper
+      DB_PASSWORD: ihelper
+      IHELPER_JWT_SECRET: ${IHELPER_JWT_SECRET:-}
+      IHELPER_REGISTRATION: ${IHELPER_REGISTRATION:-invite}
+      IHELPER_INVITE_CODE: ${IHELPER_INVITE_CODE:-}
+      # http://localhost is not HTTPS; set to true when serving this behind TLS
+      IHELPER_SECURE_COOKIE: ${IHELPER_SECURE_COOKIE:-false}
     ports:
       - "8080:8080"
 

@@ -169,15 +169,6 @@ export function usePurgeTasks() {
   });
 }
 
-/** The final deletion: erases everything that is in the bin. */
-export function useEmptyBin() {
-  const invalidate = useInvalidate();
-  return useMutation({
-    mutationFn: async () => unwrap(await api.DELETE("/api/v1/tasks/bin")),
-    onSettled: invalidate,
-  });
-}
-
 export function useCreateCategory() {
   const invalidate = useInvalidate();
   return useMutation({

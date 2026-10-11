@@ -117,7 +117,7 @@ describe("App", () => {
     expect(await screen.findByText("Call dentist")).toBeInTheDocument();
   });
 
-  it("emptying the bin asks first and then erases everything in it", async () => {
+  it("Select all then Delete selected erases everything in the bin, after asking", async () => {
     const api = setup();
     await screen.findByText("Call dentist");
     await userEvent.click(screen.getByRole("button", { name: "Delete Call dentist" }));
@@ -125,18 +125,20 @@ describe("App", () => {
 
     const nav = screen.getByRole("navigation", { name: "Categories" });
     await userEvent.click(await within(nav).findByRole("button", { name: /^Bin\s*2/ }));
-    await userEvent.click(await screen.findByRole("button", { name: "Empty bin" }));
+    expect(screen.queryByRole("button", { name: "Empty bin" })).not.toBeInTheDocument(); // Select all covers it
+    await userEvent.click(await screen.findByRole("checkbox", { name: "Select all" }));
+    await userEvent.click(screen.getByRole("button", { name: "Delete selected (2)" }));
 
     expect(screen.getByText("Erase 2 tasks forever?")).toBeInTheDocument();
-    expect(sentTo(api, "DELETE", /\/tasks\/bin$/)).toHaveLength(0); // nothing yet
+    expect(sentTo(api, "POST", /\/tasks\/bin\/purge$/)).toHaveLength(0); // nothing yet
     await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
-    expect(sentTo(api, "DELETE", /\/tasks\/bin$/)).toHaveLength(0);
+    expect(sentTo(api, "POST", /\/tasks\/bin\/purge$/)).toHaveLength(0);
 
-    await userEvent.click(screen.getByRole("button", { name: "Empty bin" }));
+    await userEvent.click(screen.getByRole("button", { name: "Delete selected (2)" }));
     await userEvent.click(screen.getByRole("button", { name: "Erase forever" }));
 
     expect(await screen.findByText("The bin is empty.")).toBeInTheDocument();
-    expect(sentTo(api, "DELETE", /\/tasks\/bin$/)).toHaveLength(1);
+    expect(sentTo(api, "POST", /\/tasks\/bin\/purge$/)).toHaveLength(1);
     await waitFor(() => expect(within(nav).getByRole("button", { name: /^Bin\s*0/ })).toBeInTheDocument());
   });
 
@@ -164,7 +166,6 @@ describe("App", () => {
     expect(screen.getByText("Water plants")).toBeInTheDocument(); // not ticked, still in the bin
     const [purge] = sentTo(api, "POST", /\/tasks\/bin\/purge$/);
     expect((purge.body?.ids as string[]).sort()).toEqual(["t1", "t3"]);
-    expect(sentTo(api, "DELETE", /\/tasks\/bin$/)).toHaveLength(0); // the whole bin was not emptied
   });
 
   it("Select all ticks every task in the bin", async () => {

@@ -100,8 +100,10 @@ export class TasksPage {
     await this.page.getByRole("button", { name: "Erase forever", exact: true }).click();
   }
 
-  async emptyBin() {
-    await this.page.getByRole("button", { name: "Empty bin", exact: true }).click();
+  /** Erases everything in the bin: Select all, then Delete selected. */
+  async eraseWholeBin() {
+    await this.page.getByRole("checkbox", { name: "Select all", exact: true }).check();
+    await this.page.getByRole("button", { name: /^Delete selected/ }).click();
     await this.page.getByRole("button", { name: "Erase forever", exact: true }).click();
   }
 
@@ -170,12 +172,16 @@ export class TasksPage {
     const horizontal = (this.page.viewportSize()?.width ?? 1280) <= 720; // the sidebar becomes a row on phones
     const forward = horizontal ? "ArrowRight" : "ArrowDown";
     const back = horizontal ? "ArrowLeft" : "ArrowUp";
-    await this.sidebar.getByRole("button", { name: `Reorder category ${name}` }).focus();
+    const handle = this.sidebar.getByRole("button", { name: `Reorder category ${name}` });
+    await handle.focus();
     await this.page.keyboard.press("Space");
+    await expect(handle).toHaveAttribute("aria-pressed", "true"); // picked up; arrows before this are lost
     for (let i = 0; i < Math.abs(steps); i++) {
       await this.page.keyboard.press(steps > 0 ? forward : back);
+      await this.page.waitForTimeout(100); // let the sensor settle on the new slot before the next key
     }
     await this.page.keyboard.press("Space");
+    await expect(handle).not.toHaveAttribute("aria-pressed", "true");
   }
 
   /** Reorders with a real pointer drag of the handle onto another category. */

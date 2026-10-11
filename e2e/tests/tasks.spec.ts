@@ -134,7 +134,7 @@ test.describe("tasks", () => {
     await expect(tasks.task(keep)).toBeVisible();
   });
 
-  test("emptying the bin deletes its tasks for good", async ({ tasks, api }) => {
+  test("selecting all and deleting empties the bin for good", async ({ tasks, api }) => {
     const keep = api.uniq("Keep");
     const gone = api.uniq("Erase");
     await api.createTask({ title: keep });
@@ -145,7 +145,7 @@ test.describe("tasks", () => {
     await tasks.openBin();
     await expect(tasks.binTask(gone)).toBeVisible();
 
-    await tasks.emptyBin();
+    await tasks.eraseWholeBin();
 
     await expect(tasks.page.getByText("The bin is empty.")).toBeVisible();
     await tasks.page.reload();

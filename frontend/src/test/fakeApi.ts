@@ -126,12 +126,6 @@ export function createFakeApi(seed: { categories?: Category[]; tasks?: Task[] } 
       state.bin = state.bin.filter((t) => !ids.includes(t.id));
       return HttpResponse.json({ purged: before - state.bin.length });
     }),
-    http.delete("*/api/v1/tasks/bin", async ({ request }) => {
-      await record(request);
-      const purged = state.bin.length;
-      state.bin = [];
-      return HttpResponse.json({ purged });
-    }),
     http.post("*/api/v1/tasks/:id/restore", async ({ request, params }) => {
       await record(request);
       const task = state.bin.find((t) => t.id === params.id);

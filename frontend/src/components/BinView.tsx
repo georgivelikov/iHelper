@@ -7,29 +7,26 @@ interface Props {
   categories: Category[];
   busy: boolean;
   onRestore: (task: Task) => void;
-  /** Erases every task in the bin. */
-  onEmpty: () => void;
-  /** Erases only the chosen tasks. */
+  /** Erases the chosen tasks for good. */
   onDeleteSelected: (ids: string[]) => void;
 }
 
-type Confirming = "all" | "selected" | null;
-
 /**
- * Deleted tasks. They can be restored one by one, erased selectively (tick them, then "Delete selected"),
- * or all at once by emptying the bin. Erasing is final, so it always asks first.
+ * Deleted tasks. They can be restored one by one, or erased: tick the tasks (or Select all) and choose
+ * "Delete selected". Erasing is final, so it always asks first.
  */
-export function BinView({ tasks, categories, busy, onRestore, onEmpty, onDeleteSelected }: Props) {
+export function BinView({ tasks, categories, busy, onRestore, onDeleteSelected }: Props) {
   const [ticked, setTicked] = useState<Set<string>>(new Set());
-  const [confirming, setConfirming] = useState<Confirming>(null);
+  const [confirming, setConfirming] = useState(false);
   const byId = new Map(categories.map((c) => [c.id, c]));
 
   // Only tasks still in the bin count: a restored or erased task silently drops out of the selection.
   const selectedIds = tasks.filter((t) => ticked.has(t.id)).map((t) => t.id);
   const allSelected = tasks.length > 0 && selectedIds.length === tasks.length;
+  const count = selectedIds.length;
 
   function toggle(id: string) {
-    setConfirming(null);
+    setConfirming(false);
     setTicked((current) => {
       const next = new Set(current);
       if (next.has(id)) next.delete(id);
@@ -39,56 +36,45 @@ export function BinView({ tasks, categories, busy, onRestore, onEmpty, onDeleteS
   }
 
   function toggleAll() {
-    setConfirming(null);
+    setConfirming(false);
     setTicked(allSelected ? new Set() : new Set(tasks.map((t) => t.id)));
   }
-
-  const count = confirming === "all" ? tasks.length : selectedIds.length;
-  const plural = (n: number) => (n === 1 ? "task" : "tasks");
 
   return (
     <section aria-label="Bin">
       <div className={styles.head}>
         <h2>Bin</h2>
-        {tasks.length > 0 &&
+        {count > 0 &&
           (confirming ? (
             <span className={styles.confirm} role="group" aria-label="Confirm erasing">
               <span>
-                Erase {count} {plural(count)} forever?
+                Erase {count} {count === 1 ? "task" : "tasks"} forever?
               </span>
               <button
                 type="button"
                 className={styles.danger}
                 disabled={busy}
                 onClick={() => {
-                  if (confirming === "all") onEmpty();
-                  else onDeleteSelected(selectedIds);
-                  setConfirming(null);
+                  onDeleteSelected(selectedIds);
+                  setConfirming(false);
                   setTicked(new Set());
                 }}
               >
                 Erase forever
               </button>
-              <button type="button" onClick={() => setConfirming(null)}>
+              <button type="button" onClick={() => setConfirming(false)}>
                 Cancel
               </button>
             </span>
           ) : (
-            <span className={styles.actions}>
-              {selectedIds.length > 0 && (
-                <button type="button" className={styles.dangerText} disabled={busy} onClick={() => setConfirming("selected")}>
-                  Delete selected ({selectedIds.length})
-                </button>
-              )}
-              <button type="button" disabled={busy} onClick={() => setConfirming("all")}>
-                Empty bin
-              </button>
-            </span>
+            <button type="button" className={styles.dangerText} disabled={busy} onClick={() => setConfirming(true)}>
+              Delete selected ({count})
+            </button>
           ))}
       </div>
       <p className={styles.hint}>
-        Deleted tasks wait here until you erase them. Tick tasks to delete only those, or empty the whole bin. Erasing
-        cannot be undone.
+        Deleted tasks wait here until you erase them. Tick the tasks to delete (or Select all). Erasing cannot be
+        undone.
       </p>
       {tasks.length === 0 ? (
         <p className={styles.empty}>The bin is empty.</p>

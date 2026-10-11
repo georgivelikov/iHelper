@@ -371,6 +371,21 @@
         },
         "type" : "object"
       },
+      "TaskPurgeRequest" : {
+        "properties" : {
+          "ids" : {
+            "items" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "maxItems" : 500,
+            "minItems" : 0,
+            "type" : "array"
+          }
+        },
+        "required" : [ "ids" ],
+        "type" : "object"
+      },
       "TaskUpdateRequest" : {
         "properties" : {
           "categoryId" : {
@@ -994,6 +1009,36 @@
           }
         },
         "summary" : "List the tasks in the bin, most recently deleted first",
+        "tags" : [ "Tasks" ]
+      }
+    },
+    "/api/v1/tasks/bin/purge" : {
+      "post" : {
+        "description" : "Only tasks that are in the bin are affected; other ids are ignored. Content is wiped and a tombstone stays for /sync. Cannot be undone.",
+        "operationId" : "purge",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TaskPurgeRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BinEmptied"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Permanently erase the chosen tasks from the bin",
         "tags" : [ "Tasks" ]
       }
     },

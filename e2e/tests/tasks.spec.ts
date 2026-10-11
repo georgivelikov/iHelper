@@ -106,6 +106,34 @@ test.describe("tasks", () => {
     await expect(tasks.task(title)).toBeVisible();
   });
 
+  test("selected tasks can be deleted from the bin while the others stay", async ({ tasks, api }) => {
+    const tag = api.uniq("Bin");
+    const erase = `${tag} erase`;
+    const keep = `${tag} keep`;
+    await api.createTask({ title: erase });
+    await api.createTask({ title: keep });
+    await tasks.goto();
+    await tasks.search(tag);
+    await tasks.deleteTask(erase);
+    await tasks.deleteTask(keep);
+    await tasks.openBin();
+    await expect(tasks.binTask(erase)).toBeVisible();
+    await expect(tasks.binTask(keep)).toBeVisible();
+
+    await tasks.deleteSelectedFromBin(erase);
+
+    await expect(tasks.binTask(erase)).toHaveCount(0);
+    await expect(tasks.binTask(keep)).toBeVisible();
+    await tasks.page.reload();
+    await tasks.openBin();
+    await expect(tasks.binTask(erase)).toHaveCount(0);
+    await expect(tasks.binTask(keep)).toBeVisible();
+    await tasks.restoreFromBin(keep);
+    await tasks.selectCategory("Home");
+    await tasks.search(keep);
+    await expect(tasks.task(keep)).toBeVisible();
+  });
+
   test("emptying the bin deletes its tasks for good", async ({ tasks, api }) => {
     const keep = api.uniq("Keep");
     const gone = api.uniq("Erase");

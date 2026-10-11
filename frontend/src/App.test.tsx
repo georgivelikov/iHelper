@@ -140,6 +140,48 @@ describe("App", () => {
     await waitFor(() => expect(within(nav).getByRole("button", { name: /^Bin\s*0/ })).toBeInTheDocument());
   });
 
+  it("selected tasks can be erased from the bin while the others stay", async () => {
+    const api = setup();
+    await screen.findByText("Call dentist");
+    await userEvent.click(screen.getByRole("button", { name: "Delete Call dentist" }));
+    await userEvent.click(screen.getByRole("button", { name: "Delete Water plants" }));
+    await userEvent.click(screen.getByRole("button", { name: "Delete Ship release" }));
+    const nav = screen.getByRole("navigation", { name: "Categories" });
+    await userEvent.click(await within(nav).findByRole("button", { name: /^Bin\s*3/ }));
+    await screen.findByRole("checkbox", { name: "Select Call dentist" });
+    expect(screen.queryByRole("button", { name: /Delete selected/ })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select Call dentist" }));
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select Ship release" }));
+    await userEvent.click(screen.getByRole("button", { name: "Delete selected (2)" }));
+
+    expect(screen.getByText("Erase 2 tasks forever?")).toBeInTheDocument();
+    expect(sentTo(api, "POST", /\/tasks\/bin\/purge$/)).toHaveLength(0); // nothing until confirmed
+    await userEvent.click(screen.getByRole("button", { name: "Erase forever" }));
+
+    await waitFor(() => expect(screen.queryByText("Call dentist")).not.toBeInTheDocument());
+    expect(screen.queryByText("Ship release")).not.toBeInTheDocument();
+    expect(screen.getByText("Water plants")).toBeInTheDocument(); // not ticked, still in the bin
+    const [purge] = sentTo(api, "POST", /\/tasks\/bin\/purge$/);
+    expect((purge.body?.ids as string[]).sort()).toEqual(["t1", "t3"]);
+    expect(sentTo(api, "DELETE", /\/tasks\/bin$/)).toHaveLength(0); // the whole bin was not emptied
+  });
+
+  it("Select all ticks every task in the bin", async () => {
+    setup();
+    await screen.findByText("Call dentist");
+    await userEvent.click(screen.getByRole("button", { name: "Delete Call dentist" }));
+    await userEvent.click(screen.getByRole("button", { name: "Delete Water plants" }));
+    const nav = screen.getByRole("navigation", { name: "Categories" });
+    await userEvent.click(await within(nav).findByRole("button", { name: /^Bin\s*2/ }));
+
+    await userEvent.click(await screen.findByRole("checkbox", { name: "Select all" }));
+
+    expect(screen.getByRole("checkbox", { name: "Select Call dentist" })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Select Water plants" })).toBeChecked();
+    expect(screen.getByRole("button", { name: "Delete selected (2)" })).toBeInTheDocument();
+  });
+
   it("deleting from the editor also moves the task to the bin", async () => {
     const api = setup([makeTask({ id: "t1", title: "Ship release" })]);
     await userEvent.click(await screen.findByRole("button", { name: "Edit Ship release" }));

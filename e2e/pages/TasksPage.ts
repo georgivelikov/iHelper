@@ -91,6 +91,15 @@ export class TasksPage {
     await this.page.getByRole("button", { name: `Restore ${title}`, exact: true }).click();
   }
 
+  /** Ticks tasks in the bin, then erases just those (asks for confirmation first). */
+  async deleteSelectedFromBin(...titles: string[]) {
+    for (const title of titles) {
+      await this.page.getByRole("checkbox", { name: `Select ${title}`, exact: true }).check();
+    }
+    await this.page.getByRole("button", { name: /^Delete selected/ }).click();
+    await this.page.getByRole("button", { name: "Erase forever", exact: true }).click();
+  }
+
   async emptyBin() {
     await this.page.getByRole("button", { name: "Empty bin", exact: true }).click();
     await this.page.getByRole("button", { name: "Erase forever", exact: true }).click();

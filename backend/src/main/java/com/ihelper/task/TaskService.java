@@ -205,6 +205,17 @@ public class TaskService {
 		return tasks.purgeBin(currentUser.id(), clock.instant());
 	}
 
+	/**
+	 * Final deletion of the chosen tasks in the bin. Ids that are not in the user's bin (live, already erased,
+	 * unknown or someone else's) are ignored, so a retry is harmless. Returns how many were erased.
+	 */
+	public int purge(List<UUID> ids) {
+		if (ids == null || ids.isEmpty()) {
+			throw new BadRequestException("ids must not be empty");
+		}
+		return tasks.purgeBinTasks(currentUser.id(), new java.util.HashSet<>(ids), clock.instant());
+	}
+
 	private Task find(UUID id) {
 		return tasks.findByIdAndOwnerIdAndDeletedAtIsNull(id, currentUser.id()).orElseThrow(() -> new NotFoundException("Task", id));
 	}

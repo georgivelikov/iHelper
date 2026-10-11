@@ -80,6 +80,13 @@ public class TaskController {
 		return new BinEmptied(service.emptyBin());
 	}
 
+	@PostMapping("/bin/purge")
+	@Operation(summary = "Permanently erase the chosen tasks from the bin",
+			description = "Only tasks that are in the bin are affected; other ids are ignored. Content is wiped and a tombstone stays for /sync. Cannot be undone.")
+	public BinEmptied purge(@Valid @RequestBody TaskPurgeRequest request) {
+		return new BinEmptied(service.purge(request.ids()));
+	}
+
 	@GetMapping("/counts")
 	@Operation(summary = "Number of open (not DONE) tasks in total, in Inbox and per category")
 	public TaskCounts counts() {

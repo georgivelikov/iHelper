@@ -10,6 +10,7 @@ import {
   useDeleteTask,
   useEmptyBin,
   usePatchTask,
+  usePurgeTasks,
   useReorderCategories,
   useRestoreTask,
   useTaskCounts,
@@ -52,6 +53,7 @@ export function App({ user }: { user?: User }) {
   const reorderCategories = useReorderCategories();
   const restoreTask = useRestoreTask();
   const emptyBin = useEmptyBin();
+  const purgeTasks = usePurgeTasks();
 
   const categories = categoriesQuery.data ?? [];
   const tasks = tasksQuery.data?.items ?? [];
@@ -69,6 +71,7 @@ export function App({ user }: { user?: User }) {
     reorderCategories.error ??
     restoreTask.error ??
     emptyBin.error ??
+    purgeTasks.error ??
     (editing ? null : patchTask.error);
 
   function dismissErrors() {
@@ -81,6 +84,7 @@ export function App({ user }: { user?: User }) {
       reorderCategories,
       restoreTask,
       emptyBin,
+      purgeTasks,
       patchTask,
     ].forEach((m) => m.reset());
   }
@@ -137,9 +141,10 @@ export function App({ user }: { user?: User }) {
             <BinView
               tasks={binQuery.data?.items ?? []}
               categories={categories}
-              busy={restoreTask.isPending || emptyBin.isPending}
+              busy={restoreTask.isPending || emptyBin.isPending || purgeTasks.isPending}
               onRestore={(t) => restoreTask.mutate({ id: t.id, version: t.version })}
               onEmpty={() => emptyBin.mutate()}
+              onDeleteSelected={(ids) => purgeTasks.mutate(ids)}
             />
           )
         ) : (

@@ -119,6 +119,13 @@ export function createFakeApi(seed: { categories?: Category[]; tasks?: Task[] } 
       await record(request);
       return HttpResponse.json({ items: state.bin, page: 0, size: 200, total: state.bin.length });
     }),
+    http.post("*/api/v1/tasks/bin/purge", async ({ request }) => {
+      await record(request.clone(), true);
+      const { ids } = (await request.json()) as { ids: string[] };
+      const before = state.bin.length;
+      state.bin = state.bin.filter((t) => !ids.includes(t.id));
+      return HttpResponse.json({ purged: before - state.bin.length });
+    }),
     http.delete("*/api/v1/tasks/bin", async ({ request }) => {
       await record(request);
       const purged = state.bin.length;

@@ -16,6 +16,23 @@
   border-radius: 8px;
   background: var(--surface);
 }
+.actions {
+  display: inline-flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.dangerText {
+  color: var(--danger);
+  border-color: var(--danger) !important;
+}
+.selectAll {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
 .confirm {
   display: inline-flex;
   align-items: center;

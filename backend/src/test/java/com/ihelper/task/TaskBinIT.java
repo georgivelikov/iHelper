@@ -108,6 +108,46 @@ class TaskBinIT extends AbstractIT {
 	}
 
 	@Test
+	void selectedTasksCanBeErasedWhileTheRestStayInTheBin() {
+		String erase = createTask(Map.of("title", unique("erase"), "description", "private"));
+		String keep = createTask(Map.of("title", unique("keep")));
+		String live = createTask(Map.of("title", unique("live")));
+		api().delete("/api/v1/tasks/" + erase).then().statusCode(204);
+		api().delete("/api/v1/tasks/" + keep).then().statusCode(204);
+
+		// A live task and an unknown id in the list are ignored, never erased.
+		api().body(Map.of("ids", java.util.List.of(erase, live, java.util.UUID.randomUUID().toString())))
+			.post("/api/v1/tasks/bin/purge").then().statusCode(200).body("purged", equalTo(1));
+
+		api().get("/api/v1/tasks/bin").then().body("items.id", contains(keep)).body("total", equalTo(1));
+		api().get("/api/v1/tasks/counts").then().body("bin", equalTo(1));
+		api().post("/api/v1/tasks/" + erase + "/restore").then().statusCode(404);
+		api().get("/api/v1/tasks/" + live).then().statusCode(200);
+		api().post("/api/v1/tasks/" + keep + "/restore").then().statusCode(200);
+		// Repeating the request is harmless.
+		api().body(Map.of("ids", java.util.List.of(erase))).post("/api/v1/tasks/bin/purge").then().statusCode(200)
+			.body("purged", equalTo(0));
+	}
+
+	@Test
+	void anotherUsersBinTasksCannotBeErased() {
+		String mine = createTask(Map.of("title", unique("mine")));
+		api().delete("/api/v1/tasks/" + mine).then().statusCode(204);
+		Session other = register(unique("other"));
+
+		as(other).body(Map.of("ids", java.util.List.of(mine))).post("/api/v1/tasks/bin/purge").then().statusCode(200)
+			.body("purged", equalTo(0));
+
+		api().get("/api/v1/tasks/bin").then().body("items.id", hasItem(mine));
+	}
+
+	@Test
+	void erasingWithoutIdsIs400() {
+		api().body(Map.of("ids", java.util.List.of())).post("/api/v1/tasks/bin/purge").then().statusCode(400)
+			.contentType("application/problem+json");
+	}
+
+	@Test
 	void theBinBelongsToTheUser() {
 		String mine = createTask(Map.of("title", unique("mine")));
 		api().delete("/api/v1/tasks/" + mine).then().statusCode(204);

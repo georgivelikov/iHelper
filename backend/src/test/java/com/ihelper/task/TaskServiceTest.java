@@ -222,6 +222,21 @@ class TaskServiceTest {
 	}
 
 	@Test
+	void purgeErasesOnlyTheChosenTasksOfTheCurrentUser() {
+		UUID a = UUID.randomUUID();
+		UUID b = UUID.randomUUID();
+		when(tasks.purgeBinTasks(OWNER, Set.of(a, b), NOW)).thenReturn(2);
+
+		assertThat(service.purge(java.util.List.of(a, b, a))).isEqualTo(2);
+	}
+
+	@Test
+	void purgeWithoutIdsIsRejected() {
+		assertThatThrownBy(() -> service.purge(java.util.List.of())).isInstanceOf(BadRequestException.class);
+		verify(tasks, never()).purgeBinTasks(any(), any(), any());
+	}
+
+	@Test
 	void emptyBinPurgesForTheCurrentUserAtTheClockTime() {
 		when(tasks.purgeBin(OWNER, NOW)).thenReturn(3);
 

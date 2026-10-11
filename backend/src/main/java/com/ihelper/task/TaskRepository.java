@@ -66,4 +66,15 @@ public interface TaskRepository extends JpaRepository<Task, UUID>, JpaSpecificat
 			""")
 	int purgeBin(@Param("ownerId") UUID ownerId, @Param("now") Instant now);
 
+	/** Like {@link #purgeBin} but only for the given tasks, and only those that really are in the bin. */
+	@Modifying(flushAutomatically = true, clearAutomatically = true)
+	@Query("""
+			update Task t
+			   set t.title = '', t.description = null, t.categoryId = null, t.dueDate = null, t.completedAt = null,
+			       t.purgedAt = :now, t.updatedAt = :now, t.version = t.version + 1
+			 where t.ownerId = :ownerId and t.id in :ids and t.deletedAt is not null and t.purgedAt is null
+			""")
+	int purgeBinTasks(@Param("ownerId") UUID ownerId, @Param("ids") java.util.Collection<UUID> ids,
+			@Param("now") Instant now);
+
 }

@@ -160,6 +160,15 @@ export function useRestoreTask() {
   });
 }
 
+/** Final deletion of only the chosen tasks in the bin. */
+export function usePurgeTasks() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: async (ids: string[]) => unwrap(await api.POST("/api/v1/tasks/bin/purge", { body: { ids } })),
+    onSettled: invalidate,
+  });
+}
+
 /** The final deletion: erases everything that is in the bin. */
 export function useEmptyBin() {
   const invalidate = useInvalidate();

@@ -219,6 +219,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tasks/bin/purge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Permanently erase the chosen tasks from the bin
+         * @description Only tasks that are in the bin are affected; other ids are ignored. Content is wiped and a tombstone stays for /sync. Cannot be undone.
+         */
+        post: operations["purge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tasks/counts": {
         parameters: {
             query?: never;
@@ -451,6 +471,9 @@ export interface components {
              * @description Optional guard; may instead be sent as If-Match header
              */
             version?: number;
+        };
+        TaskPurgeRequest: {
+            ids: string[];
         };
         TaskUpdateRequest: {
             /**
@@ -864,6 +887,30 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BinEmptied"];
+                };
+            };
+        };
+    };
+    purge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskPurgeRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {

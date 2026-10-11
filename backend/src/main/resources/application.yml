@@ -35,6 +35,11 @@ ihelper:
   cors:
     # comma separated; add the hosted web origin in the prod profile
     allowed-origins: http://localhost:5173
+  auth:
+    # Development defaults only. The prod profile has no default secret, so the app will not start without one.
+    jwt-secret: dev-only-secret-change-me-dev-only-secret
+    registration: open
+    secure-cookie: false
 
 ---
 spring:
@@ -68,4 +73,20 @@ spring:
     url: ${DB_URL}
     username: ${DB_USER}
     password: ${DB_PASSWORD}
-# Phase 6 adds: JWT auth, CORS, actuator
+server:
+  # behind the platform proxy: trust X-Forwarded-* so client address and scheme are right
+  forward-headers-strategy: framework
+springdoc:
+  api-docs:
+    enabled: ${IHELPER_SWAGGER:false}
+  swagger-ui:
+    enabled: ${IHELPER_SWAGGER:false}
+ihelper:
+  cors:
+    # the bundled app is same-origin; only set this when a separate web origin is used
+    allowed-origins: ${IHELPER_CORS_ORIGINS:}
+  auth:
+    jwt-secret: ${IHELPER_JWT_SECRET}
+    registration: ${IHELPER_REGISTRATION:invite}
+    invite-code: ${IHELPER_INVITE_CODE:}
+    secure-cookie: true

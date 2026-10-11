@@ -1,6 +1,8 @@
 package com.ihelper.task;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static com.ihelper.TestUsers.currentUser;
+import static com.ihelper.TestUsers.OWNER;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -43,13 +45,14 @@ class TaskServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		service = new TaskService(tasks, categories, Clock.fixed(NOW, ZoneOffset.UTC));
+		service = new TaskService(tasks, categories, Clock.fixed(NOW, ZoneOffset.UTC), currentUser());
 		Mockito.lenient().when(tasks.saveAndFlush(any(Task.class))).thenAnswer(i -> i.getArgument(0));
 	}
 
 	private static Task existing(TaskStatus status) {
 		Task t = new Task();
 		t.setId(UUID.randomUUID());
+		t.setOwnerId(OWNER);
 		t.setTitle("existing");
 		t.setStatus(status);
 		return t;
@@ -96,7 +99,7 @@ class TaskServiceTest {
 	@Test
 	void createRejectsUnknownCategory() {
 		UUID missing = UUID.randomUUID();
-		when(categories.findByIdAndDeletedAtIsNull(missing)).thenReturn(Optional.empty());
+		when(categories.findByIdAndOwnerIdAndDeletedAtIsNull(missing, OWNER)).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> service.create(create(null, missing, null)))
 			.isInstanceOf(BadRequestException.class);
@@ -105,7 +108,7 @@ class TaskServiceTest {
 	@Test
 	void createAcceptsExistingCategory() {
 		UUID id = UUID.randomUUID();
-		when(categories.findByIdAndDeletedAtIsNull(id)).thenReturn(Optional.of(new Category()));
+		when(categories.findByIdAndOwnerIdAndDeletedAtIsNull(id, OWNER)).thenReturn(Optional.of(new Category()));
 
 		assertThat(service.create(create(null, id, null)).value().categoryId()).isEqualTo(id);
 	}
@@ -113,7 +116,7 @@ class TaskServiceTest {
 	@Test
 	void markingDoneStampsCompletedAtAndReopeningClearsIt() {
 		Task task = existing(TaskStatus.TODO);
-		when(tasks.findByIdAndDeletedAtIsNull(task.getId())).thenReturn(Optional.of(task));
+		when(tasks.findByIdAndOwnerIdAndDeletedAtIsNull(task.getId(), OWNER)).thenReturn(Optional.of(task));
 
 		var done = service.patch(task.getId(),
 				patchOf("status", new TaskPatchRequest(null, null, null, null, TaskStatus.DONE, null, null)), null);
@@ -131,7 +134,7 @@ class TaskServiceTest {
 		task.setDescription("keep me");
 		task.setDueDate(LocalDate.of(2026, 5, 1));
 		task.setPriority(Priority.HIGH);
-		when(tasks.findByIdAndDeletedAtIsNull(task.getId())).thenReturn(Optional.of(task));
+		when(tasks.findByIdAndOwnerIdAndDeletedAtIsNull(task.getId(), OWNER)).thenReturn(Optional.of(task));
 
 		var dto = service.patch(task.getId(),
 				patchOf("dueDate", new TaskPatchRequest(null, null, null, null, null, null, null)), null);
@@ -145,7 +148,7 @@ class TaskServiceTest {
 	@Test
 	void patchRejectsBlankTitle() {
 		Task task = existing(TaskStatus.TODO);
-		when(tasks.findByIdAndDeletedAtIsNull(task.getId())).thenReturn(Optional.of(task));
+		when(tasks.findByIdAndOwnerIdAndDeletedAtIsNull(task.getId(), OWNER)).thenReturn(Optional.of(task));
 
 		assertThatThrownBy(() -> service.patch(task.getId(),
 				patchOf("title", new TaskPatchRequest(" ", null, null, null, null, null, null)), null))
@@ -155,7 +158,7 @@ class TaskServiceTest {
 	@Test
 	void staleVersionIsAConflictCarryingTheCurrentCopy() {
 		Task task = existing(TaskStatus.TODO);
-		when(tasks.findByIdAndDeletedAtIsNull(task.getId())).thenReturn(Optional.of(task));
+		when(tasks.findByIdAndOwnerIdAndDeletedAtIsNull(task.getId(), OWNER)).thenReturn(Optional.of(task));
 		// a non-persisted entity has a null version, so any expected version is stale
 		var update = new TaskUpdateRequest("x", null, null, Priority.LOW, TaskStatus.TODO, null, 7L);
 
@@ -168,7 +171,7 @@ class TaskServiceTest {
 	@Test
 	void unknownTaskIsNotFound() {
 		UUID id = UUID.randomUUID();
-		when(tasks.findByIdAndDeletedAtIsNull(id)).thenReturn(Optional.empty());
+		when(tasks.findByIdAndOwnerIdAndDeletedAtIsNull(id, OWNER)).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> service.get(id)).isInstanceOf(NotFoundException.class);
 	}
@@ -176,7 +179,7 @@ class TaskServiceTest {
 	@Test
 	void deleteIsSoftAndStampsDeletedAt() {
 		Task task = existing(TaskStatus.TODO);
-		when(tasks.findById(task.getId())).thenReturn(Optional.of(task));
+		when(tasks.findByIdAndOwnerId(task.getId(), OWNER)).thenReturn(Optional.of(task));
 
 		service.delete(task.getId(), null);
 
@@ -188,7 +191,7 @@ class TaskServiceTest {
 	void deletingTwiceIsANoOp() {
 		Task task = existing(TaskStatus.TODO);
 		task.setDeletedAt(NOW.minusSeconds(60));
-		when(tasks.findById(task.getId())).thenReturn(Optional.of(task));
+		when(tasks.findByIdAndOwnerId(task.getId(), OWNER)).thenReturn(Optional.of(task));
 
 		service.delete(task.getId(), null);
 
@@ -199,7 +202,7 @@ class TaskServiceTest {
 	@Test
 	void deletingUnknownTaskIsNotFound() {
 		UUID id = UUID.randomUUID();
-		when(tasks.findById(id)).thenReturn(Optional.empty());
+		when(tasks.findByIdAndOwnerId(id, OWNER)).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> service.delete(id, null)).isInstanceOf(NotFoundException.class);
 	}

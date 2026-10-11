@@ -15,6 +15,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -23,6 +24,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.ihelper.common.ConflictException;
 import com.ihelper.common.Created;
 
+// Security is covered by the *IT classes; these slices test controller mapping and validation only.
+@AutoConfigureMockMvc(addFilters = false)
 @WebMvcTest(CategoryController.class)
 class CategoryControllerTest {
 

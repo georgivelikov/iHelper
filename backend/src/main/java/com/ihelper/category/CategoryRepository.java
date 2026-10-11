@@ -9,15 +9,17 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface CategoryRepository extends JpaRepository<Category, UUID> {
 
-	Optional<Category> findByIdAndDeletedAtIsNull(UUID id);
+	Optional<Category> findByIdAndOwnerIdAndDeletedAtIsNull(UUID id, UUID ownerId);
 
-	List<Category> findAllByDeletedAtIsNullOrderByNameAsc();
+	Optional<Category> findByIdAndOwnerId(UUID id, UUID ownerId);
 
-	boolean existsByNameIgnoreCaseAndDeletedAtIsNull(String name);
+	List<Category> findAllByOwnerIdAndDeletedAtIsNullOrderByNameAsc(UUID ownerId);
 
-	boolean existsByNameIgnoreCaseAndDeletedAtIsNullAndIdNot(String name, UUID id);
+	boolean existsByOwnerIdAndNameIgnoreCaseAndDeletedAtIsNull(UUID ownerId, String name);
+
+	boolean existsByOwnerIdAndNameIgnoreCaseAndDeletedAtIsNullAndIdNot(UUID ownerId, String name, UUID id);
 
 	/** Includes soft-deleted rows: this feeds {@code /sync}. */
-	List<Category> findByUpdatedAtGreaterThanOrderByUpdatedAtAsc(Instant since);
+	List<Category> findByOwnerIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(UUID ownerId, Instant since);
 
 }

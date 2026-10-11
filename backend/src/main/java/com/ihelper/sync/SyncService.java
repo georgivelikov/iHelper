@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ihelper.category.CategoryDto;
 import com.ihelper.category.CategoryRepository;
+import com.ihelper.common.CurrentUser;
 import com.ihelper.task.TaskDto;
 import com.ihelper.task.TaskRepository;
 
@@ -21,10 +22,14 @@ public class SyncService {
 
 	private final Clock clock;
 
-	public SyncService(CategoryRepository categories, TaskRepository tasks, Clock clock) {
+	private final CurrentUser currentUser;
+
+	public SyncService(CategoryRepository categories, TaskRepository tasks, Clock clock,
+			CurrentUser currentUser) {
 		this.categories = categories;
 		this.tasks = tasks;
 		this.clock = clock;
+		this.currentUser = currentUser;
 	}
 
 	/**
@@ -36,11 +41,11 @@ public class SyncService {
 		Instant serverTime = clock.instant();
 		boolean initial = since == null;
 		Instant from = initial ? Instant.EPOCH : since;
-		var changedCategories = categories.findByUpdatedAtGreaterThanOrderByUpdatedAtAsc(from).stream()
+		var changedCategories = categories.findByOwnerIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(currentUser.id(), from).stream()
 			.filter(c -> !initial || !c.isDeleted())
 			.map(CategoryDto::from)
 			.toList();
-		var changedTasks = tasks.findByUpdatedAtGreaterThanOrderByUpdatedAtAsc(from).stream()
+		var changedTasks = tasks.findByOwnerIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(currentUser.id(), from).stream()
 			.filter(t -> !initial || !t.isDeleted())
 			.map(TaskDto::from)
 			.toList();

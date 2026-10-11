@@ -18,13 +18,14 @@ class SpaFallbackIT extends AbstractIT {
 
 	@Test
 	void unknownApiAndAssetPathsStay404InsteadOfFallingBackToTheApp() {
-		given().get("/api/v1/nope").then().statusCode(404);
+		api().get("/api/v1/nope").then().statusCode(404);
+		given().get("/api/v1/nope").then().statusCode(401); // never the HTML app
 		given().get("/assets/missing.js").then().statusCode(404);
 	}
 
 	@Test
 	void apiAndOpenApiDocsAreNotShadowed() {
-		given().get("/api/v1/categories").then().statusCode(200);
+		api().get("/api/v1/categories").then().statusCode(200);
 		given().get("/v3/api-docs").then().statusCode(200).body(containsString("openapi"));
 	}
 

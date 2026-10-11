@@ -59,6 +59,29 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 		return problem;
 	}
 
+	@ExceptionHandler(UnauthorizedException.class)
+	ResponseEntity<ProblemDetail> unauthorized(UnauthorizedException ex) {
+		ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
+		problem.setTitle("Unauthorized");
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).header(HttpHeaders.WWW_AUTHENTICATE, "Bearer").body(problem);
+	}
+
+	@ExceptionHandler(ForbiddenException.class)
+	ProblemDetail forbidden(ForbiddenException ex) {
+		ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+		problem.setTitle("Forbidden");
+		return problem;
+	}
+
+	@ExceptionHandler(TooManyRequestsException.class)
+	ResponseEntity<ProblemDetail> tooManyRequests(TooManyRequestsException ex) {
+		ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
+		problem.setTitle("Too many requests");
+		return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+			.header(HttpHeaders.RETRY_AFTER, String.valueOf(ex.getRetryAfterSeconds()))
+			.body(problem);
+	}
+
 	@ExceptionHandler(JacksonException.class)
 	ProblemDetail unreadable(JacksonException ex) {
 		ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Malformed request body");

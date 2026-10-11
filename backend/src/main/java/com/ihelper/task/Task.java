@@ -16,6 +16,9 @@ import jakarta.persistence.Table;
 @Table(name = "task")
 public class Task extends BaseEntity {
 
+	@Column(name = "owner_id", nullable = false, updatable = false)
+	private UUID ownerId;
+
 	@Column(nullable = false, length = 200)
 	private String title;
 
@@ -39,6 +42,14 @@ public class Task extends BaseEntity {
 
 	@Column(name = "completed_at")
 	private Instant completedAt;
+
+	public UUID getOwnerId() {
+		return ownerId;
+	}
+
+	public void setOwnerId(UUID ownerId) {
+		this.ownerId = ownerId;
+	}
 
 	public String getTitle() {
 		return title;

@@ -13,10 +13,12 @@ import org.springframework.data.repository.query.Param;
 
 public interface TaskRepository extends JpaRepository<Task, UUID>, JpaSpecificationExecutor<Task> {
 
-	Optional<Task> findByIdAndDeletedAtIsNull(UUID id);
+	Optional<Task> findByIdAndOwnerIdAndDeletedAtIsNull(UUID id, UUID ownerId);
+
+	Optional<Task> findByIdAndOwnerId(UUID id, UUID ownerId);
 
 	/** Includes soft-deleted rows: this feeds {@code /sync}. */
-	List<Task> findByUpdatedAtGreaterThanOrderByUpdatedAtAsc(Instant since);
+	List<Task> findByOwnerIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(UUID ownerId, Instant since);
 
 	interface CategoryCount {
 
@@ -30,18 +32,18 @@ public interface TaskRepository extends JpaRepository<Task, UUID>, JpaSpecificat
 	@Query("""
 			select t.categoryId as categoryId, count(t) as open
 			  from Task t
-			 where t.deletedAt is null and t.status <> com.ihelper.task.TaskStatus.DONE
+			 where t.ownerId = :ownerId and t.deletedAt is null and t.status <> com.ihelper.task.TaskStatus.DONE
 			 group by t.categoryId
 			""")
-	List<CategoryCount> countOpenByCategory();
+	List<CategoryCount> countOpenByCategory(@Param("ownerId") UUID ownerId);
 
 	/** Bulk update bypasses the entity lifecycle, so it bumps {@code updatedAt}/{@code version} itself. */
 	@Modifying(flushAutomatically = true)
 	@Query("""
 			update Task t
 			   set t.categoryId = null, t.updatedAt = :now, t.version = t.version + 1
-			 where t.categoryId = :categoryId and t.deletedAt is null
+			 where t.ownerId = :ownerId and t.categoryId = :categoryId and t.deletedAt is null
 			""")
-	int moveToInbox(@Param("categoryId") UUID categoryId, @Param("now") Instant now);
+	int moveToInbox(@Param("ownerId") UUID ownerId, @Param("categoryId") UUID categoryId, @Param("now") Instant now);
 
 }

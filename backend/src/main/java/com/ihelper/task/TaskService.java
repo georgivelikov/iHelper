@@ -18,6 +18,7 @@ import com.ihelper.category.CategoryRepository;
 import com.ihelper.common.BadRequestException;
 import com.ihelper.common.ConflictException;
 import com.ihelper.common.Created;
+import com.ihelper.common.CurrentUser;
 import com.ihelper.common.NotFoundException;
 
 @Service
@@ -35,10 +36,14 @@ public class TaskService {
 
 	private final Clock clock;
 
-	public TaskService(TaskRepository tasks, CategoryRepository categories, Clock clock) {
+	private final CurrentUser currentUser;
+
+	public TaskService(TaskRepository tasks, CategoryRepository categories, Clock clock,
+			CurrentUser currentUser) {
 		this.tasks = tasks;
 		this.categories = categories;
 		this.clock = clock;
+		this.currentUser = currentUser;
 	}
 
 	@Transactional(readOnly = true)
@@ -50,7 +55,7 @@ public class TaskService {
 			throw new BadRequestException("size must be between 1 and " + MAX_PAGE_SIZE);
 		}
 		PageRequest pageable = PageRequest.of(page, size, parseSort(sort));
-		return tasks.findAll(TaskSpecifications.matching(filter), pageable).map(TaskDto::from);
+		return tasks.findAll(TaskSpecifications.matching(currentUser.id(), filter), pageable).map(TaskDto::from);
 	}
 
 	@Transactional(readOnly = true)
@@ -58,7 +63,7 @@ public class TaskService {
 		long inbox = 0;
 		long total = 0;
 		Map<UUID, Long> byCategory = new LinkedHashMap<>();
-		for (var row : tasks.countOpenByCategory()) {
+		for (var row : tasks.countOpenByCategory(currentUser.id())) {
 			total += row.getOpen();
 			if (row.getCategoryId() == null) {
 				inbox = row.getOpen();
@@ -77,13 +82,19 @@ public class TaskService {
 
 	public Created<TaskDto> create(TaskCreateRequest request) {
 		UUID id = request.id() != null ? request.id() : UUID.randomUUID();
+		UUID owner = currentUser.id();
 		var existing = tasks.findById(id);
 		if (existing.isPresent()) {
+			// An id owned by another user must look like any other taken id: no data, no hint of the owner.
+			if (!owner.equals(existing.get().getOwnerId())) {
+				throw new ConflictException("Id " + id + " is already in use");
+			}
 			return new Created<>(TaskDto.from(existing.get()), false);
 		}
 		requireCategory(request.categoryId());
 		Task task = new Task();
 		task.setId(id);
+		task.setOwnerId(owner);
 		task.setTitle(request.title().trim());
 		task.setDescription(request.description());
 		task.setCategoryId(request.categoryId());
@@ -146,7 +157,7 @@ public class TaskService {
 
 	/** Soft delete. Deleting an already deleted task is a no-op so offline retries are safe. */
 	public void delete(UUID id, Long expectedVersion) {
-		Task task = tasks.findById(id).orElseThrow(() -> new NotFoundException("Task", id));
+		Task task = tasks.findByIdAndOwnerId(id, currentUser.id()).orElseThrow(() -> new NotFoundException("Task", id));
 		if (task.isDeleted()) {
 			return;
 		}
@@ -156,7 +167,7 @@ public class TaskService {
 	}
 
 	private Task find(UUID id) {
-		return tasks.findByIdAndDeletedAtIsNull(id).orElseThrow(() -> new NotFoundException("Task", id));
+		return tasks.findByIdAndOwnerIdAndDeletedAtIsNull(id, currentUser.id()).orElseThrow(() -> new NotFoundException("Task", id));
 	}
 
 	private void checkVersion(Task task, Long expected) {
@@ -168,7 +179,7 @@ public class TaskService {
 	}
 
 	private void requireCategory(UUID categoryId) {
-		if (categoryId != null && categories.findByIdAndDeletedAtIsNull(categoryId).isEmpty()) {
+		if (categoryId != null && categories.findByIdAndOwnerIdAndDeletedAtIsNull(categoryId, currentUser.id()).isEmpty()) {
 			throw new BadRequestException("categoryId " + categoryId + " does not refer to an existing category");
 		}
 	}

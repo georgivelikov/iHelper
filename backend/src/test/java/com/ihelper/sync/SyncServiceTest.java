@@ -1,6 +1,8 @@
 package com.ihelper.sync;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static com.ihelper.TestUsers.currentUser;
+import static com.ihelper.TestUsers.OWNER;
 import static org.mockito.Mockito.when;
 
 import java.time.Clock;
@@ -42,9 +44,9 @@ class SyncServiceTest {
 	@Test
 	void incrementalSyncIncludesDeletedRowsAndReturnsServerTime() {
 		Instant since = NOW.minusSeconds(3600);
-		when(categories.findByUpdatedAtGreaterThanOrderByUpdatedAtAsc(since)).thenReturn(List.of());
-		when(tasks.findByUpdatedAtGreaterThanOrderByUpdatedAtAsc(since)).thenReturn(List.of(task(false), task(true)));
-		var service = new SyncService(categories, tasks, Clock.fixed(NOW, ZoneOffset.UTC));
+		when(categories.findByOwnerIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(OWNER, since)).thenReturn(List.of());
+		when(tasks.findByOwnerIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(OWNER, since)).thenReturn(List.of(task(false), task(true)));
+		var service = new SyncService(categories, tasks, Clock.fixed(NOW, ZoneOffset.UTC), currentUser());
 
 		var response = service.changesSince(since);
 
@@ -54,10 +56,10 @@ class SyncServiceTest {
 
 	@Test
 	void firstFullSyncOmitsDeletedRows() {
-		when(categories.findByUpdatedAtGreaterThanOrderByUpdatedAtAsc(Instant.EPOCH)).thenReturn(List.of());
-		when(tasks.findByUpdatedAtGreaterThanOrderByUpdatedAtAsc(Instant.EPOCH))
+		when(categories.findByOwnerIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(OWNER, Instant.EPOCH)).thenReturn(List.of());
+		when(tasks.findByOwnerIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(OWNER, Instant.EPOCH))
 			.thenReturn(List.of(task(false), task(true)));
-		var service = new SyncService(categories, tasks, Clock.fixed(NOW, ZoneOffset.UTC));
+		var service = new SyncService(categories, tasks, Clock.fixed(NOW, ZoneOffset.UTC), currentUser());
 
 		assertThat(service.changesSince(null).tasks()).hasSize(1);
 	}

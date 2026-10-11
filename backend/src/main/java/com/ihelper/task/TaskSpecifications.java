@@ -2,6 +2,7 @@ package com.ihelper.task;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.data.jpa.domain.Specification;
 
@@ -12,9 +13,10 @@ final class TaskSpecifications {
 	private TaskSpecifications() {
 	}
 
-	static Specification<Task> matching(TaskFilter filter) {
+	static Specification<Task> matching(UUID ownerId, TaskFilter filter) {
 		return (root, query, cb) -> {
 			List<Predicate> predicates = new ArrayList<>();
+			predicates.add(cb.equal(root.get("ownerId"), ownerId));
 			predicates.add(cb.isNull(root.get("deletedAt")));
 			if (filter.inbox()) {
 				predicates.add(cb.isNull(root.get("categoryId")));

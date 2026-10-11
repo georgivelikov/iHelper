@@ -1,6 +1,30 @@
 {
   "components" : {
     "schemas" : {
+      "AuthResponse" : {
+        "properties" : {
+          "accessToken" : {
+            "type" : "string"
+          },
+          "expiresIn" : {
+            "description" : "Access token lifetime in seconds",
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "refreshToken" : {
+            "description" : "Only present when the request sent X-Token-Transport: body (mobile). The web app gets it as an HttpOnly cookie instead.",
+            "type" : [ "string", "null" ]
+          },
+          "tokenType" : {
+            "type" : "string"
+          },
+          "user" : {
+            "$ref" : "#/components/schemas/UserDto"
+          }
+        },
+        "required" : [ "accessToken", "expiresIn", "tokenType", "user" ],
+        "type" : "object"
+      },
       "CategoryCreateRequest" : {
         "properties" : {
           "color" : {
@@ -73,6 +97,22 @@
         "required" : [ "name" ],
         "type" : "object"
       },
+      "LoginRequest" : {
+        "properties" : {
+          "password" : {
+            "maxLength" : 72,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "username" : {
+            "maxLength" : 50,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "required" : [ "password", "username" ],
+        "type" : "object"
+      },
       "PageResponseTaskDto" : {
         "properties" : {
           "items" : {
@@ -95,6 +135,36 @@
           }
         },
         "required" : [ "items", "page", "size", "total" ],
+        "type" : "object"
+      },
+      "RefreshRequest" : {
+        "description" : "Mobile clients send the refresh token here; the web app relies on the HttpOnly cookie",
+        "properties" : {
+          "refreshToken" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "type" : "object"
+      },
+      "RegisterRequest" : {
+        "properties" : {
+          "inviteCode" : {
+            "description" : "Required when the server runs registration in invite mode",
+            "type" : [ "string", "null" ]
+          },
+          "password" : {
+            "maxLength" : 72,
+            "minLength" : 10,
+            "type" : "string"
+          },
+          "username" : {
+            "maxLength" : 50,
+            "minLength" : 3,
+            "pattern" : "^[A-Za-z0-9_.-]+$",
+            "type" : "string"
+          }
+        },
+        "required" : [ "password", "username" ],
         "type" : "object"
       },
       "SyncResponse" : {
@@ -304,15 +374,189 @@
         },
         "required" : [ "priority", "status", "title" ],
         "type" : "object"
+      },
+      "UserDto" : {
+        "properties" : {
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "username" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id", "username" ],
+        "type" : "object"
+      }
+    },
+    "securitySchemes" : {
+      "bearerAuth" : {
+        "bearerFormat" : "JWT",
+        "scheme" : "bearer",
+        "type" : "http"
       }
     }
   },
   "info" : {
-    "title" : "OpenAPI definition",
-    "version" : "v0"
+    "title" : "iHelper API",
+    "version" : "v1"
   },
   "openapi" : "3.1.0",
   "paths" : {
+    "/api/v1/auth/login" : {
+      "post" : {
+        "description" : "401 on bad credentials, 429 after repeated failures.",
+        "operationId" : "login",
+        "parameters" : [ {
+          "in" : "header",
+          "name" : "X-Token-Transport",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AuthResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "security" : [ ],
+        "summary" : "Sign in with username and password",
+        "tags" : [ "Auth" ]
+      }
+    },
+    "/api/v1/auth/logout" : {
+      "post" : {
+        "operationId" : "logout",
+        "parameters" : [ {
+          "in" : "cookie",
+          "name" : "ihelper_refresh",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RefreshRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "security" : [ ],
+        "summary" : "Revoke the refresh token and clear the cookie; idempotent",
+        "tags" : [ "Auth" ]
+      }
+    },
+    "/api/v1/auth/refresh" : {
+      "post" : {
+        "description" : "The token comes from the request body (mobile) or the HttpOnly cookie (web).",
+        "operationId" : "refresh",
+        "parameters" : [ {
+          "in" : "cookie",
+          "name" : "ihelper_refresh",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "X-Token-Transport",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RefreshRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AuthResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "security" : [ ],
+        "summary" : "Trade a refresh token for a new access token (the refresh token rotates)",
+        "tags" : [ "Auth" ]
+      }
+    },
+    "/api/v1/auth/register" : {
+      "post" : {
+        "description" : "403 when registration is closed or the invite code is wrong, 409 when the username is taken.",
+        "operationId" : "register",
+        "parameters" : [ {
+          "description" : "Send 'body' to receive the refresh token in the response body (mobile)",
+          "in" : "header",
+          "name" : "X-Token-Transport",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RegisterRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AuthResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "security" : [ ],
+        "summary" : "Create an account and sign in",
+        "tags" : [ "Auth" ]
+      }
+    },
     "/api/v1/categories" : {
       "get" : {
         "operationId" : "list_1",
@@ -458,6 +702,25 @@
         },
         "summary" : "Replace a category; 409 with the current copy if the version is stale",
         "tags" : [ "Categories" ]
+      }
+    },
+    "/api/v1/me" : {
+      "get" : {
+        "operationId" : "me",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "The signed-in user",
+        "tags" : [ "Auth" ]
       }
     },
     "/api/v1/sync" : {
@@ -769,5 +1032,8 @@
         "tags" : [ "Tasks" ]
       }
     }
-  }
+  },
+  "security" : [ {
+    "bearerAuth" : [ ]
+  } ]
 }

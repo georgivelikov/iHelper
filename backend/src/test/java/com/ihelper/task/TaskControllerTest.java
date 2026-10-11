@@ -21,6 +21,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -32,6 +33,8 @@ import com.ihelper.common.ConflictException;
 import com.ihelper.common.Created;
 import com.ihelper.common.NotFoundException;
 
+// Security is covered by the *IT classes; these slices test controller mapping and validation only.
+@AutoConfigureMockMvc(addFilters = false)
 @WebMvcTest(TaskController.class)
 class TaskControllerTest {
 

@@ -7,6 +7,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -15,6 +16,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageRequest;
 
 import com.ihelper.TestcontainersConfiguration;
+import com.ihelper.auth.User;
+import com.ihelper.auth.UserRepository;
 import com.ihelper.category.Category;
 import com.ihelper.category.CategoryRepository;
 
@@ -32,9 +35,31 @@ class TaskRepositoryTest {
 	@Autowired
 	jakarta.persistence.EntityManager em;
 
+	@Autowired
+	UserRepository users;
+
+	UUID owner;
+
+	UUID otherOwner;
+
+	@BeforeEach
+	void createOwners() {
+		owner = newUser();
+		otherOwner = newUser();
+	}
+
+	private UUID newUser() {
+		User u = new User();
+		u.setId(UUID.randomUUID());
+		u.setUsername("repo-" + UUID.randomUUID().toString().substring(0, 12));
+		u.setPasswordHash("!");
+		return users.saveAndFlush(u).getId();
+	}
+
 	private Task task(String title, Priority priority, TaskStatus status, LocalDate due, UUID categoryId) {
 		Task t = new Task();
 		t.setId(UUID.randomUUID());
+		t.setOwnerId(owner);
 		t.setTitle(title);
 		t.setPriority(priority);
 		t.setStatus(status);
@@ -46,12 +71,13 @@ class TaskRepositoryTest {
 	private Category category(String name) {
 		Category c = new Category();
 		c.setId(UUID.randomUUID());
+		c.setOwnerId(owner);
 		c.setName(name);
 		return categories.saveAndFlush(c);
 	}
 
 	private List<String> titles(TaskFilter filter, String sort) {
-		return tasks.findAll(TaskSpecifications.matching(filter),
+		return tasks.findAll(TaskSpecifications.matching(owner, filter),
 				PageRequest.of(0, 100, TaskService.parseSort(sort))).map(Task::getTitle).toList();
 	}
 
@@ -103,7 +129,7 @@ class TaskRepositoryTest {
 		tasks.saveAndFlush(t);
 
 		assertThat(titles(filter(null, null, null, marker), null)).isEmpty();
-		assertThat(tasks.findByIdAndDeletedAtIsNull(t.getId())).isEmpty();
+		assertThat(tasks.findByIdAndOwnerIdAndDeletedAtIsNull(t.getId(), owner)).isEmpty();
 		assertThat(tasks.findById(t.getId())).isPresent();
 	}
 
@@ -141,7 +167,7 @@ class TaskRepositoryTest {
 			task(marker + " " + i, Priority.LOW, TaskStatus.TODO, null, null);
 		}
 
-		var page = tasks.findAll(TaskSpecifications.matching(filter(null, null, null, marker)),
+		var page = tasks.findAll(TaskSpecifications.matching(owner, filter(null, null, null, marker)),
 				PageRequest.of(1, 2, TaskService.parseSort("title")));
 
 		assertThat(page.getTotalElements()).isEqualTo(5);
@@ -155,7 +181,7 @@ class TaskRepositoryTest {
 		Instant before = t.getUpdatedAt();
 		Instant now = before.plusSeconds(5);
 
-		int moved = tasks.moveToInbox(cat.getId(), now);
+		int moved = tasks.moveToInbox(owner, cat.getId(), now);
 		em.clear(); // bulk update bypasses the persistence context
 		Task reloaded = tasks.findById(t.getId()).orElseThrow();
 
@@ -172,8 +198,33 @@ class TaskRepositoryTest {
 		t.setDeletedAt(Instant.now());
 		tasks.saveAndFlush(t);
 
-		assertThat(tasks.findByUpdatedAtGreaterThanOrderByUpdatedAtAsc(since))
+		assertThat(tasks.findByOwnerIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(owner, since))
 			.extracting(Task::getId).contains(t.getId());
+	}
+
+	@Test
+	void queriesNeverReturnAnotherUsersRows() {
+		String marker = "mine-" + UUID.randomUUID();
+		Task mine = task(marker, Priority.LOW, TaskStatus.TODO, null, null);
+
+		assertThat(tasks.findByIdAndOwnerIdAndDeletedAtIsNull(mine.getId(), otherOwner)).isEmpty();
+		assertThat(tasks.findByIdAndOwnerId(mine.getId(), otherOwner)).isEmpty();
+		assertThat(tasks.findAll(TaskSpecifications.matching(otherOwner, filter(null, null, null, marker)))).isEmpty();
+		assertThat(tasks.findByOwnerIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(otherOwner, Instant.EPOCH))
+			.extracting(Task::getId).doesNotContain(mine.getId());
+		assertThat(tasks.countOpenByCategory(otherOwner)).isEmpty();
+	}
+
+	@Test
+	void moveToInboxOnlyTouchesTheOwnersTasks() {
+		Category cat = category("repo-test-" + UUID.randomUUID());
+		Task t = task("stay", Priority.LOW, TaskStatus.TODO, null, cat.getId());
+
+		int moved = tasks.moveToInbox(otherOwner, cat.getId(), Instant.now());
+		em.clear();
+
+		assertThat(moved).isZero();
+		assertThat(tasks.findById(t.getId()).orElseThrow().getCategoryId()).isEqualTo(cat.getId());
 	}
 
 }

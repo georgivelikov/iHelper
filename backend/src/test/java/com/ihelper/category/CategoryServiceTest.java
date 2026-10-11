@@ -1,6 +1,8 @@
 package com.ihelper.category;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static com.ihelper.TestUsers.currentUser;
+import static com.ihelper.TestUsers.OWNER;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
@@ -40,7 +42,7 @@ class CategoryServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		service = new CategoryService(categories, tasks, Clock.fixed(NOW, ZoneOffset.UTC));
+		service = new CategoryService(categories, tasks, Clock.fixed(NOW, ZoneOffset.UTC), currentUser());
 		Mockito.lenient().when(categories.saveAndFlush(any(Category.class))).thenAnswer(i -> i.getArgument(0));
 	}
 
@@ -48,18 +50,19 @@ class CategoryServiceTest {
 		Category c = new Category();
 		c.setId(UUID.randomUUID());
 		c.setName(name);
+		c.setOwnerId(OWNER);
 		return c;
 	}
 
 	@Test
 	void deleteMovesTasksToInboxThenSoftDeletes() {
 		Category c = category("Work");
-		when(categories.findById(c.getId())).thenReturn(Optional.of(c));
+		when(categories.findByIdAndOwnerId(c.getId(), OWNER)).thenReturn(Optional.of(c));
 
 		service.delete(c.getId(), null);
 
 		var order = inOrder(tasks, categories);
-		order.verify(tasks).moveToInbox(c.getId(), NOW);
+		order.verify(tasks).moveToInbox(OWNER, c.getId(), NOW);
 		order.verify(categories).saveAndFlush(c);
 		assertThat(c.getDeletedAt()).isEqualTo(NOW);
 	}
@@ -68,17 +71,17 @@ class CategoryServiceTest {
 	void deleteTwiceDoesNothing() {
 		Category c = category("Work");
 		c.setDeletedAt(NOW.minusSeconds(5));
-		when(categories.findById(c.getId())).thenReturn(Optional.of(c));
+		when(categories.findByIdAndOwnerId(c.getId(), OWNER)).thenReturn(Optional.of(c));
 
 		service.delete(c.getId(), null);
 
-		verify(tasks, never()).moveToInbox(any(), any());
+		verify(tasks, never()).moveToInbox(any(), any(), any());
 	}
 
 	@Test
 	void deleteUnknownIsNotFound() {
 		UUID id = UUID.randomUUID();
-		when(categories.findById(id)).thenReturn(Optional.empty());
+		when(categories.findByIdAndOwnerId(id, OWNER)).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> service.delete(id, null)).isInstanceOf(NotFoundException.class);
 	}
@@ -86,7 +89,7 @@ class CategoryServiceTest {
 	@Test
 	void createRejectsDuplicateNameIgnoringCase() {
 		when(categories.findById(any())).thenReturn(Optional.empty());
-		when(categories.existsByNameIgnoreCaseAndDeletedAtIsNull("work")).thenReturn(true);
+		when(categories.existsByOwnerIdAndNameIgnoreCaseAndDeletedAtIsNull(OWNER, "work")).thenReturn(true);
 
 		assertThatThrownBy(() -> service.create(new CategoryCreateRequest(null, "work", null)))
 			.isInstanceOf(ConflictException.class);
@@ -106,8 +109,8 @@ class CategoryServiceTest {
 	@Test
 	void updateRenamesAndChecksUniquenessExcludingSelf() {
 		Category c = category("Work");
-		when(categories.findByIdAndDeletedAtIsNull(c.getId())).thenReturn(Optional.of(c));
-		when(categories.existsByNameIgnoreCaseAndDeletedAtIsNullAndIdNot("WORK", c.getId())).thenReturn(false);
+		when(categories.findByIdAndOwnerIdAndDeletedAtIsNull(c.getId(), OWNER)).thenReturn(Optional.of(c));
+		when(categories.existsByOwnerIdAndNameIgnoreCaseAndDeletedAtIsNullAndIdNot(OWNER, "WORK", c.getId())).thenReturn(false);
 
 		var dto = service.update(c.getId(), new CategoryUpdateRequest("WORK", "#112233", null), null);
 
@@ -118,7 +121,7 @@ class CategoryServiceTest {
 	@Test
 	void updateWithStaleVersionConflictsWithCurrentCopy() {
 		Category c = category("Work");
-		when(categories.findByIdAndDeletedAtIsNull(c.getId())).thenReturn(Optional.of(c));
+		when(categories.findByIdAndOwnerIdAndDeletedAtIsNull(c.getId(), OWNER)).thenReturn(Optional.of(c));
 
 		assertThatThrownBy(() -> service.update(c.getId(), new CategoryUpdateRequest("Other", null, 3L), 3L))
 			.isInstanceOfSatisfying(ConflictException.class,

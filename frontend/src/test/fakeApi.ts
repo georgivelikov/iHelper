@@ -20,7 +20,7 @@ export function makeTask(over: Partial<Task> & { id: string; title: string }): T
 }
 
 export function makeCategory(over: Partial<Category> & { id: string; name: string }): Category {
-  return { color: "#0ea5e9", createdAt: NOW, updatedAt: NOW, version: 0, deletedAt: null, ...over };
+  return { color: "#0ea5e9", position: 0, createdAt: NOW, updatedAt: NOW, version: 0, deletedAt: null, ...over };
 }
 
 export interface RecordedRequest {
@@ -44,6 +44,8 @@ export function createFakeApi(seed: { categories?: Category[]; tasks?: Task[] } 
   const state = {
     categories: [...(seed.categories ?? [])],
     tasks: [...(seed.tasks ?? [])],
+    /** Tasks the user deleted: what the bin shows. */
+    bin: [] as Task[],
     requests: [] as RecordedRequest[],
     /** When set, the next PATCH to this task id answers 409 with `current`. */
     forceConflict: new Map<string, Task>(),
@@ -69,9 +71,22 @@ export function createFakeApi(seed: { categories?: Category[]; tasks?: Task[] } 
     http.post("*/api/v1/categories", async ({ request }) => {
       await record(request.clone(), true);
       const body = (await request.json()) as { id: string; name: string; color?: string };
-      const created = makeCategory({ id: body.id, name: body.name, color: body.color ?? null });
+      const created = makeCategory({
+        id: body.id,
+        name: body.name,
+        color: body.color ?? null,
+        position: state.categories.length,
+      });
       state.categories.push(created);
       return HttpResponse.json(created, { status: 201 });
+    }),
+    http.put("*/api/v1/categories/order", async ({ request }) => {
+      await record(request.clone(), true);
+      const { ids } = (await request.json()) as { ids: string[] };
+      const listed = ids.map((id) => state.categories.find((c) => c.id === id)!);
+      const rest = state.categories.filter((c) => !ids.includes(c.id));
+      state.categories = [...listed, ...rest].map((c, position) => ({ ...c, position }));
+      return HttpResponse.json(state.categories);
     }),
     http.put("*/api/v1/categories/:id", async ({ request, params }) => {
       await record(request.clone(), true);
@@ -97,7 +112,27 @@ export function createFakeApi(seed: { categories?: Category[]; tasks?: Task[] } 
         total: open.length,
         inbox: open.filter((t) => !t.categoryId).length,
         byCategory,
+        bin: state.bin.length,
       });
+    }),
+    http.get("*/api/v1/tasks/bin", async ({ request }) => {
+      await record(request);
+      return HttpResponse.json({ items: state.bin, page: 0, size: 200, total: state.bin.length });
+    }),
+    http.delete("*/api/v1/tasks/bin", async ({ request }) => {
+      await record(request);
+      const purged = state.bin.length;
+      state.bin = [];
+      return HttpResponse.json({ purged });
+    }),
+    http.post("*/api/v1/tasks/:id/restore", async ({ request, params }) => {
+      await record(request);
+      const task = state.bin.find((t) => t.id === params.id);
+      if (!task) return problem(404, "Not Found");
+      state.bin = state.bin.filter((t) => t.id !== params.id);
+      const restored = { ...task, deletedAt: null, version: task.version + 1 };
+      state.tasks.push(restored);
+      return HttpResponse.json(restored);
     }),
     http.get("*/api/v1/tasks", async ({ request }) => {
       await record(request);
@@ -142,7 +177,9 @@ export function createFakeApi(seed: { categories?: Category[]; tasks?: Task[] } 
     }),
     http.delete("*/api/v1/tasks/:id", async ({ request, params }) => {
       await record(request);
+      const gone = state.tasks.find((t) => t.id === params.id);
       state.tasks = state.tasks.filter((t) => t.id !== params.id);
+      if (gone) state.bin.unshift({ ...gone, deletedAt: NOW });
       return new HttpResponse(null, { status: 204 });
     }),
   ];

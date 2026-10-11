@@ -2,12 +2,16 @@ import { useState } from "react";
 import type { Priority, Task, User } from "@ihelper/api-client";
 import { signOut } from "./auth/session";
 import {
+  useBin,
   useCategories,
   useCreateCategory,
   useCreateTask,
   useDeleteCategory,
   useDeleteTask,
+  useEmptyBin,
   usePatchTask,
+  useReorderCategories,
+  useRestoreTask,
   useTaskCounts,
   useTasks,
   useUpdateCategory,
@@ -15,6 +19,7 @@ import {
   type SortKey,
   type StatusFilter,
 } from "./api/hooks";
+import { BinView } from "./components/BinView";
 import { CategorySidebar } from "./components/CategorySidebar";
 import { ErrorBanner } from "./components/ErrorBanner";
 import { Filters } from "./components/Filters";
@@ -25,7 +30,8 @@ import styles from "./App.module.css";
 
 export function App({ user }: { user?: User }) {
   const [view, setView] = useState("all");
-  const [status, setStatus] = useState<StatusFilter>("open");
+  // Finished tasks stay visible (and sink to the bottom) until the user filters them away.
+  const [status, setStatus] = useState<StatusFilter>("all");
   const [priority, setPriority] = useState<Priority | "">("");
   const [sort, setSort] = useState<SortKey>("priority");
   const [q, setQ] = useState("");
@@ -34,6 +40,8 @@ export function App({ user }: { user?: User }) {
   const categoriesQuery = useCategories();
   const counts = useTaskCounts();
   const tasksQuery = useTasks({ view, status, priority, sort, q });
+  const inBin = view === "bin";
+  const binQuery = useBin(inBin);
 
   const createTask = useCreateTask();
   const patchTask = usePatchTask();
@@ -41,6 +49,9 @@ export function App({ user }: { user?: User }) {
   const createCategory = useCreateCategory();
   const updateCategory = useUpdateCategory();
   const deleteCategory = useDeleteCategory();
+  const reorderCategories = useReorderCategories();
+  const restoreTask = useRestoreTask();
+  const emptyBin = useEmptyBin();
 
   const categories = categoriesQuery.data ?? [];
   const tasks = tasksQuery.data?.items ?? [];
@@ -48,16 +59,30 @@ export function App({ user }: { user?: User }) {
   // Errors from the toolbar/list actions; the edit dialog shows its own save error.
   const bannerError =
     tasksQuery.error ??
+    binQuery.error ??
     categoriesQuery.error ??
     createTask.error ??
     deleteTask.error ??
     createCategory.error ??
     updateCategory.error ??
     deleteCategory.error ??
+    reorderCategories.error ??
+    restoreTask.error ??
+    emptyBin.error ??
     (editing ? null : patchTask.error);
 
   function dismissErrors() {
-    [createTask, deleteTask, createCategory, updateCategory, deleteCategory, patchTask].forEach((m) => m.reset());
+    [
+      createTask,
+      deleteTask,
+      createCategory,
+      updateCategory,
+      deleteCategory,
+      reorderCategories,
+      restoreTask,
+      emptyBin,
+      patchTask,
+    ].forEach((m) => m.reset());
   }
 
   function toggle(task: Task) {
@@ -73,7 +98,7 @@ export function App({ user }: { user?: User }) {
     patchTask.reset();
   }
 
-  const defaultCategory = view === "all" || view === "inbox" ? "" : view;
+  const defaultCategory = view === "all" || view === "inbox" || view === "bin" ? "" : view;
 
   return (
     <div className={styles.layout}>
@@ -100,36 +125,60 @@ export function App({ user }: { user?: User }) {
             if (c.id === view) setView("all");
             deleteCategory.mutate(c);
           }}
+          onReorder={(ids) => reorderCategories.mutate(ids)}
         />
       </aside>
       <main className={styles.main}>
         <ErrorBanner error={bannerError} onDismiss={dismissErrors} />
-        <QuickAdd
-          key={defaultCategory}
-          categories={categories}
-          defaultCategoryId={defaultCategory}
-          disabled={createTask.isPending}
-          onAdd={(t) => createTask.mutate(t)}
-        />
-        <Filters
-          status={status}
-          priority={priority}
-          sort={sort}
-          q={q}
-          onStatus={setStatus}
-          onPriority={setPriority}
-          onSort={setSort}
-          onSearch={setQ}
-        />
-        {tasksQuery.isLoading ? (
-          <p role="status">Loading…</p>
+        {inBin ? (
+          binQuery.isLoading ? (
+            <p role="status">Loading…</p>
+          ) : (
+            <BinView
+              tasks={binQuery.data?.items ?? []}
+              categories={categories}
+              busy={restoreTask.isPending || emptyBin.isPending}
+              onRestore={(t) => restoreTask.mutate({ id: t.id, version: t.version })}
+              onEmpty={() => emptyBin.mutate()}
+            />
+          )
         ) : (
-          <TaskList tasks={tasks} categories={categories} sort={sort} onToggle={toggle} onEdit={setEditing} />
-        )}
-        {tasksQuery.data && tasksQuery.data.total > PAGE_SIZE && (
-          <p className={styles.note}>
-            Showing the first {PAGE_SIZE} of {tasksQuery.data.total} tasks. Narrow the filters to see the rest.
-          </p>
+          <>
+            <QuickAdd
+              key={defaultCategory}
+              categories={categories}
+              defaultCategoryId={defaultCategory}
+              disabled={createTask.isPending}
+              onAdd={(t) => createTask.mutate(t)}
+            />
+            <Filters
+              status={status}
+              priority={priority}
+              sort={sort}
+              q={q}
+              onStatus={setStatus}
+              onPriority={setPriority}
+              onSort={setSort}
+              onSearch={setQ}
+            />
+            {tasksQuery.isLoading ? (
+              <p role="status">Loading…</p>
+            ) : (
+              <TaskList
+                tasks={tasks}
+                categories={categories}
+                sort={sort}
+                onToggle={toggle}
+                onEdit={setEditing}
+                onDelete={(t) => deleteTask.mutate({ id: t.id, version: t.version })}
+              />
+            )}
+            {tasksQuery.data && tasksQuery.data.total > PAGE_SIZE && (
+              <p className={styles.note}>
+                Showing the first {PAGE_SIZE} of {tasksQuery.data.total} tasks. Narrow the filters to see the rest.
+              </p>
+            )}
+          </>
         )}
       </main>
       {editing && (

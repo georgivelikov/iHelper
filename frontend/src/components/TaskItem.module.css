@@ -7,6 +7,27 @@
   border: 1px solid var(--border);
   border-left: 4px solid transparent;
   border-radius: 8px;
+  cursor: pointer;
+}
+.item:hover {
+  border-color: #c9ccd8;
+}
+.done {
+  opacity: 0.7;
+}
+.delete {
+  flex: none;
+  padding: 0.3rem;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--muted);
+  line-height: 0;
+}
+.delete:hover,
+.delete:focus-visible {
+  color: var(--danger);
+  background: #fdecea;
 }
 .overdue {
   border-left-color: var(--danger);
@@ -28,6 +49,7 @@
   font-weight: 600;
   color: inherit;
   overflow-wrap: anywhere;
+  cursor: pointer;
 }
 .meta {
   display: flex;

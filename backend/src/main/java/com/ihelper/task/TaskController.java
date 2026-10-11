@@ -65,6 +65,21 @@ public class TaskController {
 		return PageResponse.of(service.list(filter, sort, page, size));
 	}
 
+	@GetMapping("/bin")
+	@Operation(summary = "List the tasks in the bin, most recently deleted first")
+	public PageResponse<TaskDto> bin(
+			@Parameter(description = "Zero-based page number") @RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "50") int size) {
+		return PageResponse.of(service.bin(page, size));
+	}
+
+	@DeleteMapping("/bin")
+	@Operation(summary = "Empty the bin: permanently erase every task in it",
+			description = "The task content is wiped; only an id and a deleted marker stay so other devices learn about it through /sync. Cannot be undone.")
+	public BinEmptied emptyBin() {
+		return new BinEmptied(service.emptyBin());
+	}
+
 	@GetMapping("/counts")
 	@Operation(summary = "Number of open (not DONE) tasks in total, in Inbox and per category")
 	public TaskCounts counts() {
@@ -113,8 +128,16 @@ public class TaskController {
 		return service.patch(id, new TaskPatch(present, values), Versions.resolve(values.version(), ifMatch));
 	}
 
+	@PostMapping("/{id}/restore")
+	@Operation(summary = "Take a task out of the bin",
+			description = "Idempotent for a task that is not in the bin. 404 once the bin has been emptied. An optional If-Match version guards against stale restores.")
+	public TaskDto restore(@PathVariable UUID id,
+			@RequestHeader(value = "If-Match", required = false) String ifMatch) {
+		return service.restore(id, Versions.resolve(null, ifMatch));
+	}
+
 	@DeleteMapping("/{id}")
-	@Operation(summary = "Soft-delete a task",
+	@Operation(summary = "Move a task to the bin (soft delete)",
 			description = "Idempotent: deleting an already deleted task returns 204. An optional If-Match version guards against stale deletes.")
 	public ResponseEntity<Void> delete(@PathVariable UUID id,
 			@RequestHeader(value = "If-Match", required = false) String ifMatch) {

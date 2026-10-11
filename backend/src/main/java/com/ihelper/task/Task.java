@@ -43,6 +43,10 @@ public class Task extends BaseEntity {
 	@Column(name = "completed_at")
 	private Instant completedAt;
 
+	/** Set when the bin was emptied: the content is wiped and only a tombstone remains for /sync. */
+	@Column(name = "purged_at")
+	private Instant purgedAt;
+
 	public UUID getOwnerId() {
 		return ownerId;
 	}
@@ -105,6 +109,14 @@ public class Task extends BaseEntity {
 
 	public void setCompletedAt(Instant completedAt) {
 		this.completedAt = completedAt;
+	}
+
+	public Instant getPurgedAt() {
+		return purgedAt;
+	}
+
+	public void setPurgedAt(Instant purgedAt) {
+		this.purgedAt = purgedAt;
 	}
 
 }

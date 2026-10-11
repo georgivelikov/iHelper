@@ -32,9 +32,9 @@ public class AuthService {
 	private record Seed(String name, String color) {
 	}
 
+	/** In display order; more can be added (and all reordered) by the user. */
 	private static final List<Seed> STARTER_CATEGORIES = List.of(new Seed("Personal", "#6366f1"),
-			new Seed("Work", "#0ea5e9"), new Seed("Home", "#22c55e"), new Seed("Shopping", "#f59e0b"),
-			new Seed("Ideas", "#ec4899"));
+			new Seed("Ideas", "#ec4899"), new Seed("Work", "#0ea5e9"));
 
 	private final UserRepository users;
 
@@ -88,8 +88,10 @@ public class AuthService {
 		user.setUsername(username);
 		user.setPasswordHash(passwordEncoder.encode(request.password()));
 		users.saveAndFlush(user);
-		for (Seed seed : STARTER_CATEGORIES) {
+		for (int position = 0; position < STARTER_CATEGORIES.size(); position++) {
+			Seed seed = STARTER_CATEGORIES.get(position);
 			Category category = new Category();
+			category.setPosition(position);
 			category.setId(UUID.randomUUID());
 			category.setOwnerId(user.getId());
 			category.setName(seed.name());

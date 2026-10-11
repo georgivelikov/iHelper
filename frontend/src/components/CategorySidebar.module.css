@@ -56,6 +56,25 @@
   color: var(--muted);
   padding: 0.3rem;
 }
+.handle {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  padding: 0.3rem 0.15rem;
+  cursor: grab;
+  letter-spacing: -0.15em;
+  touch-action: none; /* lets a finger drag the handle instead of scrolling the page */
+}
+.handle:active {
+  cursor: grabbing;
+}
+.dragging {
+  position: relative;
+  z-index: 1;
+  background: var(--surface);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+}
 .editor,
 .add {
   display: flex;

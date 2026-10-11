@@ -177,6 +177,58 @@ class TaskServiceTest {
 	}
 
 	@Test
+	void restoreTakesTheTaskOutOfTheBin() {
+		Task task = existing(TaskStatus.TODO);
+		task.setDeletedAt(NOW.minusSeconds(60));
+		when(tasks.findByIdAndOwnerId(task.getId(), OWNER)).thenReturn(Optional.of(task));
+
+		TaskDto dto = service.restore(task.getId(), null);
+
+		assertThat(dto.deletedAt()).isNull();
+		assertThat(task.isDeleted()).isFalse();
+	}
+
+	@Test
+	void restoreSendsATaskWhoseCategoryIsGoneToInbox() {
+		Task task = existing(TaskStatus.TODO);
+		task.setDeletedAt(NOW.minusSeconds(60));
+		UUID gone = UUID.randomUUID();
+		task.setCategoryId(gone);
+		when(tasks.findByIdAndOwnerId(task.getId(), OWNER)).thenReturn(Optional.of(task));
+		when(categories.findByIdAndOwnerIdAndDeletedAtIsNull(gone, OWNER)).thenReturn(Optional.empty());
+
+		service.restore(task.getId(), null);
+
+		assertThat(task.getCategoryId()).isNull();
+	}
+
+	@Test
+	void restoreOfAPurgedTaskIsNotFound() {
+		Task task = existing(TaskStatus.TODO);
+		task.setDeletedAt(NOW.minusSeconds(60));
+		task.setPurgedAt(NOW.minusSeconds(30));
+		when(tasks.findByIdAndOwnerId(task.getId(), OWNER)).thenReturn(Optional.of(task));
+
+		assertThatThrownBy(() -> service.restore(task.getId(), null)).isInstanceOf(NotFoundException.class);
+	}
+
+	@Test
+	void restoreOfALiveTaskIsANoOpAndSkipsTheVersionCheck() {
+		Task task = existing(TaskStatus.TODO);
+		when(tasks.findByIdAndOwnerId(task.getId(), OWNER)).thenReturn(Optional.of(task));
+
+		assertThat(service.restore(task.getId(), 99L).id()).isEqualTo(task.getId());
+		verify(tasks, never()).saveAndFlush(any(Task.class));
+	}
+
+	@Test
+	void emptyBinPurgesForTheCurrentUserAtTheClockTime() {
+		when(tasks.purgeBin(OWNER, NOW)).thenReturn(3);
+
+		assertThat(service.emptyBin()).isEqualTo(3);
+	}
+
+	@Test
 	void deleteIsSoftAndStampsDeletedAt() {
 		Task task = existing(TaskStatus.TODO);
 		when(tasks.findByIdAndOwnerId(task.getId(), OWNER)).thenReturn(Optional.of(task));

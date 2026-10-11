@@ -17,20 +17,34 @@ interface Props {
   sort: SortKey;
   onToggle: (task: Task) => void;
   onEdit: (task: Task) => void;
+  onDelete: (task: Task) => void;
 }
 
-export function TaskList({ tasks, categories, sort, onToggle, onEdit }: Props) {
+/** Finished tasks stay in the list but sink below the open ones (the order inside each part is kept). */
+const openFirst = (list: Task[]) => [
+  ...list.filter((t) => t.status !== "DONE"),
+  ...list.filter((t) => t.status === "DONE"),
+];
+
+export function TaskList({ tasks, categories, sort, onToggle, onEdit, onDelete }: Props) {
   if (tasks.length === 0) {
     return <p className={styles.empty}>No tasks here.</p>;
   }
   const byId = new Map(categories.map((c) => [c.id, c]));
   const renderItem = (t: Task) => (
-    <TaskItem key={t.id} task={t} category={t.categoryId ? byId.get(t.categoryId) : undefined} onToggle={onToggle} onEdit={onEdit} />
+    <TaskItem
+      key={t.id}
+      task={t}
+      category={t.categoryId ? byId.get(t.categoryId) : undefined}
+      onToggle={onToggle}
+      onEdit={onEdit}
+      onDelete={onDelete}
+    />
   );
 
   // Grouped by priority when sorted by priority; other sorts are a flat list.
   if (sort !== "priority") {
-    return <ul className={styles.list}>{tasks.map(renderItem)}</ul>;
+    return <ul className={styles.list}>{openFirst(tasks).map(renderItem)}</ul>;
   }
   return (
     <div>
@@ -42,7 +56,7 @@ export function TaskList({ tasks, categories, sort, onToggle, onEdit }: Props) {
             <h3 className={styles.heading}>
               {GROUP_LABEL[p]} <span>{group.length}</span>
             </h3>
-            <ul className={styles.list}>{group.map(renderItem)}</ul>
+            <ul className={styles.list}>{openFirst(group).map(renderItem)}</ul>
           </section>
         );
       })}

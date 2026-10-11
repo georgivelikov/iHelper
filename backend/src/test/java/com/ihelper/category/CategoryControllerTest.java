@@ -40,7 +40,7 @@ class CategoryControllerTest {
 	@Test
 	void listReturnsPlainArray() throws Exception {
 		UUID id = UUID.randomUUID();
-		when(service.list()).thenReturn(List.of(new CategoryDto(id, "Work", "#0ea5e9", T, T, 0L, null)));
+		when(service.list()).thenReturn(List.of(new CategoryDto(id, "Work", "#0ea5e9", 0, T, T, 0L, null)));
 
 		mvc.perform(get("/api/v1/categories"))
 			.andExpect(status().isOk())
@@ -69,7 +69,7 @@ class CategoryControllerTest {
 	void createReturns201() throws Exception {
 		UUID id = UUID.randomUUID();
 		when(service.create(any()))
-			.thenReturn(new Created<>(new CategoryDto(id, "Gym", null, T, T, 0L, null), true));
+			.thenReturn(new Created<>(new CategoryDto(id, "Gym", null, 0, T, T, 0L, null), true));
 
 		mvc.perform(post("/api/v1/categories").contentType(MediaType.APPLICATION_JSON)
 				.content("{\"name\":\"Gym\"}"))

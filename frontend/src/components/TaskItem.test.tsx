@@ -8,7 +8,7 @@ const noop = () => {};
 describe("TaskItem", () => {
   it("highlights an open task whose due date has passed", () => {
     const task = makeTask({ id: "1", title: "Pay rent", dueDate: "2000-01-01" });
-    render(<ul><TaskItem task={task} onToggle={noop} onEdit={noop} /></ul>);
+    render(<ul><TaskItem task={task} onToggle={noop} onEdit={noop} onDelete={noop} /></ul>);
 
     expect(screen.getByRole("listitem")).toHaveAttribute("data-overdue", "true");
     expect(screen.getByText(/Overdue · 2000-01-01/)).toBeInTheDocument();
@@ -16,7 +16,7 @@ describe("TaskItem", () => {
 
   it("does not highlight a finished task even if the date passed", () => {
     const task = makeTask({ id: "1", title: "Pay rent", dueDate: "2000-01-01", status: "DONE" });
-    render(<ul><TaskItem task={task} onToggle={noop} onEdit={noop} /></ul>);
+    render(<ul><TaskItem task={task} onToggle={noop} onEdit={noop} onDelete={noop} /></ul>);
 
     expect(screen.getByRole("listitem")).not.toHaveAttribute("data-overdue");
     expect(screen.getByRole("checkbox")).toBeChecked();
@@ -24,7 +24,7 @@ describe("TaskItem", () => {
 
   it("does not highlight a future due date", () => {
     const task = makeTask({ id: "1", title: "Later", dueDate: "2999-01-01" });
-    render(<ul><TaskItem task={task} onToggle={noop} onEdit={noop} /></ul>);
+    render(<ul><TaskItem task={task} onToggle={noop} onEdit={noop} onDelete={noop} /></ul>);
 
     expect(screen.getByRole("listitem")).not.toHaveAttribute("data-overdue");
     expect(screen.getByText("Due 2999-01-01")).toBeInTheDocument();
@@ -36,7 +36,7 @@ describe("TaskItem", () => {
     const task = makeTask({ id: "1", title: "Write report", priority: "URGENT", categoryId: "c1" });
     render(
       <ul>
-        <TaskItem task={task} category={makeCategory({ id: "c1", name: "Work" })} onToggle={onToggle} onEdit={onEdit} />
+        <TaskItem task={task} category={makeCategory({ id: "c1", name: "Work" })} onToggle={onToggle} onEdit={onEdit} onDelete={noop} />
       </ul>,
     );
 
@@ -48,5 +48,40 @@ describe("TaskItem", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Write report" }));
     expect(onEdit).toHaveBeenCalledWith(task);
+  });
+
+  it("opens the editor when any part of the row is clicked", async () => {
+    const onEdit = vi.fn();
+    const task = makeTask({ id: "1", title: "Write report", priority: "URGENT" });
+    render(<ul><TaskItem task={task} onToggle={noop} onEdit={onEdit} onDelete={noop} /></ul>);
+
+    await userEvent.click(screen.getByText("Urgent")); // the badge, not the title
+    expect(onEdit).toHaveBeenCalledTimes(1);
+
+    await userEvent.click(screen.getByRole("button", { name: "Write report" }));
+    expect(onEdit).toHaveBeenCalledTimes(2);
+  });
+
+  it("delete and checkbox act on their own without opening the editor", async () => {
+    const onEdit = vi.fn();
+    const onDelete = vi.fn();
+    const onToggle = vi.fn();
+    const task = makeTask({ id: "1", title: "Write report" });
+    render(<ul><TaskItem task={task} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} /></ul>);
+
+    await userEvent.click(screen.getByRole("button", { name: "Delete Write report" }));
+    await userEvent.click(screen.getByRole("checkbox"));
+
+    expect(onDelete).toHaveBeenCalledWith(task);
+    expect(onToggle).toHaveBeenCalledWith(task);
+    expect(onEdit).not.toHaveBeenCalled();
+  });
+
+  it("marks a finished task as Done", () => {
+    const task = makeTask({ id: "1", title: "Write report", status: "DONE" });
+    render(<ul><TaskItem task={task} onToggle={noop} onEdit={noop} onDelete={noop} /></ul>);
+
+    expect(screen.getByText("Done")).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "Reopen Write report" })).toBeChecked();
   });
 });

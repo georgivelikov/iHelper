@@ -6,6 +6,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface CategoryRepository extends JpaRepository<Category, UUID> {
 
@@ -13,7 +15,11 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
 
 	Optional<Category> findByIdAndOwnerId(UUID id, UUID ownerId);
 
-	List<Category> findAllByOwnerIdAndDeletedAtIsNullOrderByNameAsc(UUID ownerId);
+	List<Category> findAllByOwnerIdAndDeletedAtIsNullOrderByPositionAscNameAsc(UUID ownerId);
+
+	/** The highest position among live categories, or -1 when there are none. */
+	@Query("select coalesce(max(c.position), -1) from Category c where c.ownerId = :ownerId and c.deletedAt is null")
+	int maxPosition(@Param("ownerId") UUID ownerId);
 
 	boolean existsByOwnerIdAndNameIgnoreCaseAndDeletedAtIsNull(UUID ownerId, String name);
 

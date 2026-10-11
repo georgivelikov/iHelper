@@ -62,6 +62,14 @@ public class CategoryController {
 		return service.update(id, request, Versions.require(request.version(), ifMatch));
 	}
 
+	@PutMapping("/order")
+	@Operation(summary = "Set the display order of categories",
+			description = "Listed categories come first in the given order; unlisted ones follow in their current order. "
+					+ "Returns every live category in the new order.")
+	public List<CategoryDto> reorder(@Valid @RequestBody CategoryReorderRequest request) {
+		return service.reorder(request.ids());
+	}
+
 	@DeleteMapping("/{id}")
 	@Operation(summary = "Soft-delete a category; its tasks move to Inbox",
 			description = "Idempotent: deleting an already deleted category returns 204. An optional If-Match version guards against stale deletes.")

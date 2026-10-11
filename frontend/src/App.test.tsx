@@ -6,7 +6,7 @@ import { createFakeApi, makeCategory, makeTask } from "./test/fakeApi";
 import { renderWithClient } from "./test/render";
 
 const work = makeCategory({ id: "cat-work", name: "Work" });
-const home = makeCategory({ id: "cat-home", name: "Home", color: "#22c55e" });
+const home = makeCategory({ id: "cat-home", name: "Errands", color: "#22c55e" });
 
 function setup(tasks = [
   makeTask({ id: "t1", title: "Ship release", priority: "URGENT", categoryId: work.id }),
@@ -24,18 +24,18 @@ const sentTo = (api: ReturnType<typeof setup>, method: string, path: RegExp) =>
   api.state.requests.filter((r) => r.method === method && path.test(r.path));
 
 describe("App", () => {
-  it("lists open tasks grouped by priority, with counts in the sidebar", async () => {
+  it("lists tasks grouped by priority, finished ones included, with counts in the sidebar", async () => {
     setup();
 
     await screen.findByText("Ship release");
-    expect(screen.queryByText("Old chore")).not.toBeInTheDocument(); // done tasks hidden by default
+    expect(screen.getByText("Old chore")).toBeInTheDocument(); // done tasks stay visible by default
 
     const urgent = screen.getByRole("region", { name: "Urgent priority" });
     expect(within(urgent).getByText("Ship release")).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "High priority" })).toHaveTextContent("Call dentist");
 
     const nav = screen.getByRole("navigation", { name: "Categories" });
-    expect(await within(nav).findByRole("button", { name: /^All\s*3/ })).toBeInTheDocument();
+    expect(await within(nav).findByRole("button", { name: /^Home\s*3/ })).toBeInTheDocument();
     expect(within(nav).getByRole("button", { name: /^Inbox\s*1/ })).toBeInTheDocument();
     expect(within(nav).getByRole("button", { name: /^Work\s*1/ })).toBeInTheDocument();
   });
@@ -54,15 +54,96 @@ describe("App", () => {
     expect(post.body?.id).toMatch(/^[0-9a-f-]{36}$/);
   });
 
-  it("completes a task with a PATCH carrying the version, and it leaves the open list", async () => {
+  it("completing a task marks it Done and keeps it in the list", async () => {
     const api = setup();
     await screen.findByText("Call dentist");
 
     await userEvent.click(screen.getByRole("checkbox", { name: "Complete Call dentist" }));
 
-    await waitFor(() => expect(screen.queryByText("Call dentist")).not.toBeInTheDocument());
+    expect(await screen.findByRole("checkbox", { name: "Reopen Call dentist" })).toBeChecked();
+    expect(screen.getByText("Call dentist")).toBeInTheDocument();
     const [patch] = sentTo(api, "PATCH", /\/tasks\/t3$/);
     expect(patch.body).toEqual({ status: "DONE", version: 0 });
+    expect(sentTo(api, "DELETE", /\/tasks\//)).toHaveLength(0); // nothing is removed automatically
+  });
+
+  it("shows finished tasks below the open ones of the same priority", async () => {
+    setup([
+      makeTask({ id: "a", title: "Finished low", priority: "LOW", status: "DONE" }),
+      makeTask({ id: "b", title: "Open low", priority: "LOW" }),
+    ]);
+
+    const low = await screen.findByRole("region", { name: "Low priority" });
+    const titles = within(low).getAllByRole("listitem").map((li) => li.textContent ?? "");
+    expect(titles[0]).toContain("Open low");
+    expect(titles[1]).toContain("Finished low");
+  });
+
+  it("opens the editor from anywhere on the row, not only the title", async () => {
+    setup([makeTask({ id: "t1", title: "Ship release", priority: "URGENT" })]);
+    await screen.findByText("Ship release");
+
+    const row = within(screen.getByRole("region", { name: "Urgent priority" })).getByRole("listitem");
+    await userEvent.click(within(row).getByText("Urgent")); // the badge, not the title
+
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("deleting a task moves it to the bin, where it can be restored", async () => {
+    const api = setup();
+    await screen.findByText("Call dentist");
+
+    await userEvent.click(screen.getByRole("button", { name: "Delete Call dentist" }));
+
+    await waitFor(() => expect(screen.queryByText("Call dentist")).not.toBeInTheDocument());
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument(); // the delete icon does not open the editor
+    expect(sentTo(api, "DELETE", /\/tasks\/t3$/)).toHaveLength(1);
+
+    const nav = screen.getByRole("navigation", { name: "Categories" });
+    await userEvent.click(await within(nav).findByRole("button", { name: /^Bin\s*1/ }));
+    expect(await screen.findByText("Call dentist")).toBeInTheDocument();
+    expect(screen.queryByLabelText("New task title")).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Restore Call dentist" }));
+    await waitFor(() => expect(screen.getByText("The bin is empty.")).toBeInTheDocument());
+    expect(sentTo(api, "POST", /\/tasks\/t3\/restore$/)[0].body).toBeUndefined();
+
+    await userEvent.click(within(nav).getByRole("button", { name: /^Home/ }));
+    expect(await screen.findByText("Call dentist")).toBeInTheDocument();
+  });
+
+  it("emptying the bin asks first and then erases everything in it", async () => {
+    const api = setup();
+    await screen.findByText("Call dentist");
+    await userEvent.click(screen.getByRole("button", { name: "Delete Call dentist" }));
+    await userEvent.click(screen.getByRole("button", { name: "Delete Water plants" }));
+
+    const nav = screen.getByRole("navigation", { name: "Categories" });
+    await userEvent.click(await within(nav).findByRole("button", { name: /^Bin\s*2/ }));
+    await userEvent.click(await screen.findByRole("button", { name: "Empty bin" }));
+
+    expect(screen.getByText("Erase 2 tasks forever?")).toBeInTheDocument();
+    expect(sentTo(api, "DELETE", /\/tasks\/bin$/)).toHaveLength(0); // nothing yet
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(sentTo(api, "DELETE", /\/tasks\/bin$/)).toHaveLength(0);
+
+    await userEvent.click(screen.getByRole("button", { name: "Empty bin" }));
+    await userEvent.click(screen.getByRole("button", { name: "Erase forever" }));
+
+    expect(await screen.findByText("The bin is empty.")).toBeInTheDocument();
+    expect(sentTo(api, "DELETE", /\/tasks\/bin$/)).toHaveLength(1);
+    await waitFor(() => expect(within(nav).getByRole("button", { name: /^Bin\s*0/ })).toBeInTheDocument());
+  });
+
+  it("deleting from the editor also moves the task to the bin", async () => {
+    const api = setup([makeTask({ id: "t1", title: "Ship release" })]);
+    await userEvent.click(await screen.findByRole("button", { name: "Ship release" }));
+
+    await userEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Delete" }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(sentTo(api, "DELETE", /\/tasks\/t1$/)).toHaveLength(1);
+    expect(api.state.bin.map((t) => t.id)).toEqual(["t1"]);
   });
 
   it("filters by status, priority and category through the API", async () => {
@@ -74,11 +155,13 @@ describe("App", () => {
     expect(screen.queryByText("Ship release")).not.toBeInTheDocument();
 
     await userEvent.selectOptions(screen.getByLabelText("Show"), "open");
+    await waitFor(() => expect(screen.queryByText("Old chore")).not.toBeInTheDocument());
     await userEvent.selectOptions(screen.getByLabelText("Priority"), "LOW");
     await screen.findByText("Water plants");
     expect(screen.queryByText("Ship release")).not.toBeInTheDocument();
 
     await userEvent.selectOptions(screen.getByLabelText("Priority"), "");
+    await screen.findByText("Ship release");
     const nav = screen.getByRole("navigation", { name: "Categories" });
     await userEvent.click(within(nav).getByRole("button", { name: /^Work/ }));
     await waitFor(() => expect(screen.queryByText("Water plants")).not.toBeInTheDocument());

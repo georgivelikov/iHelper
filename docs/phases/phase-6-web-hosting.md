@@ -16,7 +16,7 @@ iHelper reachable on the internet over HTTPS, with real accounts, running from t
 - Migration `V2`: `app_user` (`id` uuid, `username` unique case-insensitive, `password_hash`, `created_at`, `version`, `deleted_at`); `owner_id` (FK, not null) on `category` and `task`; category-name uniqueness becomes per owner.
 - Existing rows (dev data) are assigned to a placeholder `local` user created in the migration. Hosted databases start empty.
 - Every repository query, service and `/sync` is scoped to the authenticated user. A user asking for another user's id gets **404**, never 403.
-- Seed categories (Personal, Work, Home, Shopping, Ideas) are created per user at registration instead of in the migration.
+- Starter categories are created per user at registration instead of in the migration (originally Personal, Work, Home, Shopping, Ideas; now Personal, Ideas, Work, see "Follow-up changes").
 - Tests: cross-user isolation in every IT (list, get, patch, delete, sync, counts).
 
 ### 2. Authentication (Spring Security, stateless)  -- DONE
@@ -61,6 +61,17 @@ iHelper reachable on the internet over HTTPS, with real accounts, running from t
 - **SPA fallback** no longer swallows `/actuator/**` (found by `ProdProfileIT`).
 - **Tests:** backend 68 unit/slice + 62 integration (cross-user isolation, auth flows, registration modes, prod profile); frontend 40; e2e 34 (every test registers its own user).
 - **Known limits:** rate limiter is per instance (run one instance); no email, so password reset is a manual SQL step in `docs/RUNBOOK.md`; dev data from before this phase sits under the `local` user and is not visible to new accounts.
+
+## Follow-up changes (after the Phase 6 review)
+Requested by the user while using the app; implemented as one change (migration `V3`).
+- **Starter categories:** only Personal, Ideas, Work for new accounts. Existing accounts keep what they have (decided: leave them, no data is removed).
+- **Category order:** `category.position`; `PUT /api/v1/categories/order`; drag handle in the sidebar (`@dnd-kit`, pointer + keyboard). New categories are appended. `position` is part of the category DTO and `/sync`.
+- **Home:** the old "All" entry is now called Home and shows every task of every category (Inbox included). Inbox stays as its own entry.
+- **Whole row clickable:** clicking anywhere on a task row opens the editor; the checkbox and delete icon do their own thing.
+- **Done stays visible:** completing a task only sets its status to DONE. The default status filter is now "All" and finished tasks sort below the open ones of their priority group. Counts still show open tasks only.
+- **Delete icon and Bin:** the trash icon on a row (and Delete in the editor) moves the task to the bin (the existing soft delete). Bin view: `GET /tasks/bin`, restore with `POST /tasks/{id}/restore`, empty with `DELETE /tasks/bin` (UI asks to confirm). `GET /tasks/counts` also returns `bin`.
+- **Final deletion keeps a tombstone:** emptying the bin sets `purged_at` and wipes title, description, category, due date and completion time; the row (id, priority, status, timestamps, `deletedAt`) remains so `/sync` can still tell an offline device about the deletion. Purged tasks cannot be restored. Soft deletes that happened before this change appear in the bin the first time it is opened.
+- **Tests:** backend adds `TaskBinIT`, reorder cases in `CategoryApiIT`, service unit tests (73 unit/slice + 75 integration); frontend 51; e2e 47 (keyboard and pointer drag, bin, Home, row click).
 
 ## Done when
 - A new user can register (with the invite code), log in on the hosted HTTPS URL, create tasks, reload, log out; a second user sees none of the first user's data.

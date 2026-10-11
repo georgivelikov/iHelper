@@ -43,7 +43,11 @@ export class TasksPage {
 
   /** Task titles in rendered order. */
   async titles(): Promise<string[]> {
-    return this.page.locator("li").filter({ has: this.page.getByRole("checkbox") }).getByRole("button").allInnerTexts();
+    return this.page
+      .locator("li")
+      .filter({ has: this.page.getByRole("checkbox") })
+      .locator('button:not([aria-label^="Delete "])')
+      .allInnerTexts();
   }
 
   // --- quick add ---
@@ -56,11 +60,40 @@ export class TasksPage {
 
   // --- complete / reopen ---
   async complete(title: string) {
-    await this.page.getByRole("checkbox", { name: `Complete ${title}` }).click(); // the row leaves the list, so check() cannot confirm state
+    await this.page.getByRole("checkbox", { name: `Complete ${title}` }).click();
   }
 
   async reopen(title: string) {
     await this.page.getByRole("checkbox", { name: `Reopen ${title}` }).click();
+  }
+
+  /** The delete icon on a row: moves the task to the bin. */
+  async deleteTask(title: string) {
+    await this.page.getByRole("button", { name: `Delete ${title}`, exact: true }).click();
+  }
+
+  // --- bin ---
+  binEntry(): Locator {
+    return this.sidebar.getByRole("button", { name: /^Bin(\s+\d+ deleted)?$/ });
+  }
+
+  async openBin() {
+    await this.binEntry().click();
+    await expect(this.page.getByRole("region", { name: "Bin" })).toBeVisible();
+  }
+
+  /** A task as listed inside the bin. */
+  binTask(title: string): Locator {
+    return this.page.getByRole("region", { name: "Bin" }).getByText(title, { exact: true });
+  }
+
+  async restoreFromBin(title: string) {
+    await this.page.getByRole("button", { name: `Restore ${title}`, exact: true }).click();
+  }
+
+  async emptyBin() {
+    await this.page.getByRole("button", { name: "Empty bin", exact: true }).click();
+    await this.page.getByRole("button", { name: "Erase forever", exact: true }).click();
   }
 
   // --- edit dialog ---
@@ -87,13 +120,13 @@ export class TasksPage {
   }
 
   async deleteFromEditor() {
-    await this.dialog.getByRole("button", { name: "Delete" }).click();
+    await this.dialog.getByRole("button", { name: "Delete", exact: true }).click();
     await expect(this.dialog).toBeHidden();
   }
 
   // --- categories ---
   category(name: string): Locator {
-    return this.sidebar.getByRole("button", { name: new RegExp(`^${escapeRegExp(name)}(\\s+\\d+ open)?$`) });
+    return this.sidebar.getByRole("button", { name: new RegExp(`^${escapeRegExp(name)}(\\s+\\d+ (open|deleted))?$`) });
   }
 
   async selectCategory(name: string) {
@@ -113,9 +146,45 @@ export class TasksPage {
     await expect(this.category(to)).toBeVisible();
   }
 
+  /** Names of the user's categories, top (or left) first. */
+  async categoryOrder(): Promise<string[]> {
+    const texts = await this.sidebar
+      .getByRole("list", { name: "Your categories" })
+      .getByRole("button", { name: / \d+ open$/ })
+      .allInnerTexts();
+    return texts.map((t) => t.split("\n")[0].trim());
+  }
+
+  /** Reorders with the keyboard: Space picks the handle up, arrows move it, Space drops it. */
+  async moveCategory(name: string, steps: number) {
+    const horizontal = (this.page.viewportSize()?.width ?? 1280) <= 720; // the sidebar becomes a row on phones
+    const forward = horizontal ? "ArrowRight" : "ArrowDown";
+    const back = horizontal ? "ArrowLeft" : "ArrowUp";
+    await this.sidebar.getByRole("button", { name: `Reorder category ${name}` }).focus();
+    await this.page.keyboard.press("Space");
+    for (let i = 0; i < Math.abs(steps); i++) {
+      await this.page.keyboard.press(steps > 0 ? forward : back);
+    }
+    await this.page.keyboard.press("Space");
+  }
+
+  /** Reorders with a real pointer drag of the handle onto another category. */
+  async dragCategory(name: string, onto: string) {
+    const handle = await this.sidebar.getByRole("button", { name: `Reorder category ${name}` }).boundingBox();
+    const target = await this.category(onto).boundingBox();
+    if (!handle || !target) throw new Error("category not visible");
+    const from = { x: handle.x + handle.width / 2, y: handle.y + handle.height / 2 };
+    const to = { x: target.x + target.width / 2, y: target.y + target.height / 2 };
+    await this.page.mouse.move(from.x, from.y);
+    await this.page.mouse.down();
+    await this.page.mouse.move(from.x + 6, from.y + 6, { steps: 3 });
+    await this.page.mouse.move(to.x, to.y, { steps: 12 });
+    await this.page.mouse.up();
+  }
+
   async deleteCategory(name: string) {
     await this.sidebar.getByRole("button", { name: `Edit category ${name}` }).click();
-    await this.sidebar.getByRole("button", { name: "Delete" }).click();
+    await this.sidebar.getByRole("button", { name: "Delete", exact: true }).click();
     await expect(this.category(name)).toHaveCount(0);
   }
 }

@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Priority, TaskStatus } from "@ihelper/api-client";
+import type { Category, Priority, TaskStatus } from "@ihelper/api-client";
 import { api } from "./client";
 import { unwrap } from "./errors";
 
-/** "all", "inbox", or a category id. */
+/** "all" (Home), "inbox", "bin", or a category id. */
 export type View = string;
 export type StatusFilter = "open" | "done" | "all";
 export type SortKey = "priority" | "due" | "newest" | "title";
@@ -48,6 +48,7 @@ export function useTaskCounts() {
 export function useTasks(query: TaskQuery) {
   return useQuery({
     queryKey: ["tasks", query],
+    enabled: query.view !== "bin",
     queryFn: async () =>
       unwrap(
         await api.GET("/api/v1/tasks", {
@@ -67,12 +68,22 @@ export function useTasks(query: TaskQuery) {
   });
 }
 
+/** The bin: deleted tasks waiting to be restored or erased for good. */
+export function useBin(enabled: boolean) {
+  return useQuery({
+    queryKey: ["bin"],
+    enabled,
+    queryFn: async () => unwrap(await api.GET("/api/v1/tasks/bin", { params: { query: { size: PAGE_SIZE } } })),
+  });
+}
+
 /** Every mutation refreshes whatever the change might have touched. */
 function useInvalidate() {
   const client = useQueryClient();
   return () =>
     Promise.all([
       client.invalidateQueries({ queryKey: ["tasks"] }),
+      client.invalidateQueries({ queryKey: ["bin"] }),
       client.invalidateQueries({ queryKey: ["counts"] }),
       client.invalidateQueries({ queryKey: ["categories"] }),
     ]);
@@ -136,6 +147,28 @@ export function useDeleteTask() {
   });
 }
 
+export function useRestoreTask() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: async ({ id, version }: { id: string; version: number }) =>
+      unwrap(
+        await api.POST("/api/v1/tasks/{id}/restore", {
+          params: { path: { id }, header: { "If-Match": `"${version}"` } },
+        }),
+      ),
+    onSettled: invalidate,
+  });
+}
+
+/** The final deletion: erases everything that is in the bin. */
+export function useEmptyBin() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: async () => unwrap(await api.DELETE("/api/v1/tasks/bin")),
+    onSettled: invalidate,
+  });
+}
+
 export function useCreateCategory() {
   const invalidate = useInvalidate();
   return useMutation({
@@ -168,6 +201,29 @@ export function useDeleteCategory() {
           params: { path: { id }, header: { "If-Match": `"${version}"` } },
         }),
       ),
+    onSettled: invalidate,
+  });
+}
+
+/** Saves a new category order. The list reorders at once and rolls back if the server refuses. */
+export function useReorderCategories() {
+  const client = useQueryClient();
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: async (ids: string[]) => unwrap(await api.PUT("/api/v1/categories/order", { body: { ids } })),
+    onMutate: async (ids) => {
+      await client.cancelQueries({ queryKey: ["categories"] });
+      const previous = client.getQueryData<Category[]>(["categories"]);
+      if (previous) {
+        const byId = new Map(previous.map((c) => [c.id, c]));
+        const listed = ids.flatMap((id) => byId.get(id) ?? []);
+        client.setQueryData<Category[]>(["categories"], [...listed, ...previous.filter((c) => !ids.includes(c.id))]);
+      }
+      return { previous };
+    },
+    onError: (_error, _ids, context) => {
+      if (context?.previous) client.setQueryData(["categories"], context.previous);
+    },
     onSettled: invalidate,
   });
 }

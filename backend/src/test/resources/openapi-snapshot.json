@@ -25,6 +25,16 @@
         "required" : [ "accessToken", "expiresIn", "tokenType", "user" ],
         "type" : "object"
       },
+      "BinEmptied" : {
+        "properties" : {
+          "purged" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "purged" ],
+        "type" : "object"
+      },
       "CategoryCreateRequest" : {
         "properties" : {
           "color" : {
@@ -65,6 +75,11 @@
           "name" : {
             "type" : "string"
           },
+          "position" : {
+            "description" : "Display order, 0 first. Change it with PUT /categories/order",
+            "format" : "int32",
+            "type" : "integer"
+          },
           "updatedAt" : {
             "format" : "date-time",
             "type" : "string"
@@ -74,7 +89,22 @@
             "type" : "integer"
           }
         },
-        "required" : [ "createdAt", "id", "name", "updatedAt", "version" ],
+        "required" : [ "createdAt", "id", "name", "position", "updatedAt", "version" ],
+        "type" : "object"
+      },
+      "CategoryReorderRequest" : {
+        "properties" : {
+          "ids" : {
+            "items" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "maxItems" : 500,
+            "minItems" : 0,
+            "type" : "array"
+          }
+        },
+        "required" : [ "ids" ],
         "type" : "object"
       },
       "CategoryUpdateRequest" : {
@@ -191,6 +221,10 @@
       },
       "TaskCounts" : {
         "properties" : {
+          "bin" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
           "byCategory" : {
             "additionalProperties" : {
               "format" : "int64",
@@ -207,7 +241,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "byCategory", "inbox", "total" ],
+        "required" : [ "bin", "byCategory", "inbox", "total" ],
         "type" : "object"
       },
       "TaskCreateRequest" : {
@@ -266,7 +300,7 @@
             "type" : "string"
           },
           "deletedAt" : {
-            "description" : "Set when soft-deleted (only visible through /sync)",
+            "description" : "Set when the task is in the bin (also reported by /sync)",
             "format" : "date-time",
             "type" : [ "string", "null" ]
           },
@@ -607,6 +641,39 @@
         "tags" : [ "Categories" ]
       }
     },
+    "/api/v1/categories/order" : {
+      "put" : {
+        "description" : "Listed categories come first in the given order; unlisted ones follow in their current order. Returns every live category in the new order.",
+        "operationId" : "reorder",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CategoryReorderRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/CategoryDto"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Set the display order of categories",
+        "tags" : [ "Categories" ]
+      }
+    },
     "/api/v1/categories/{id}" : {
       "delete" : {
         "description" : "Idempotent: deleting an already deleted category returns 204. An optional If-Match version guards against stale deletes.",
@@ -873,6 +940,63 @@
         "tags" : [ "Tasks" ]
       }
     },
+    "/api/v1/tasks/bin" : {
+      "delete" : {
+        "description" : "The task content is wiped; only an id and a deleted marker stay so other devices learn about it through /sync. Cannot be undone.",
+        "operationId" : "emptyBin",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BinEmptied"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Empty the bin: permanently erase every task in it",
+        "tags" : [ "Tasks" ]
+      },
+      "get" : {
+        "operationId" : "bin",
+        "parameters" : [ {
+          "description" : "Zero-based page number",
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "default" : 0,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "default" : 50,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageResponseTaskDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "List the tasks in the bin, most recently deleted first",
+        "tags" : [ "Tasks" ]
+      }
+    },
     "/api/v1/tasks/counts" : {
       "get" : {
         "operationId" : "counts",
@@ -917,7 +1041,7 @@
             "description" : "OK"
           }
         },
-        "summary" : "Soft-delete a task",
+        "summary" : "Move a task to the bin (soft delete)",
         "tags" : [ "Tasks" ]
       },
       "get" : {
@@ -1029,6 +1153,42 @@
           }
         },
         "summary" : "Replace a task; 409 with the current copy if the version is stale",
+        "tags" : [ "Tasks" ]
+      }
+    },
+    "/api/v1/tasks/{id}/restore" : {
+      "post" : {
+        "description" : "Idempotent for a task that is not in the bin. 404 once the bin has been emptied. An optional If-Match version guards against stale restores.",
+        "operationId" : "restore",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "If-Match",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TaskDto"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Take a task out of the bin",
         "tags" : [ "Tasks" ]
       }
     }

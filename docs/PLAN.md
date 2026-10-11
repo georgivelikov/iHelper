@@ -53,15 +53,18 @@ iHelper/
 
 ## Domain model (v1)
 - All entities: `id` (UUID), `createdAt`, `updatedAt`, `version`, `deletedAt`
-- **Category:** `name` (unique), `color`
+- **Category:** `name` (unique per owner), `color`, `position` (display order, set by drag-and-drop)
 - **Task:** `title` (required), `description` (optional), `categoryId` (FK, nullable = "Inbox"), `priority` enum `LOW | MEDIUM | HIGH | URGENT`, `status` enum `TODO | IN_PROGRESS | DONE`, `dueDate` (optional), `completedAt`
-- Seed categories in V1 migration: Personal, Work, Home, Shopping, Ideas
+- Starter categories, created per user at registration (Phase 6): Personal, Ideas, Work (in that order)
+- **Bin:** deleting a task soft-deletes it (`deletedAt`), which puts it in the bin. Emptying the bin wipes the content and sets `purgedAt`; the row stays as a tombstone so `/sync` still reports the deletion.
 
 ## REST API (`/api/v1`): one API for web and mobile
 The backend has no knowledge of any particular client. The web frontend and the mobile app are equal consumers of the same versioned JSON API.
 
 **Endpoints**
 - `GET/POST /categories`, `GET/PUT/DELETE /categories/{id}` (deleting a category moves its tasks to Inbox)
+- `PUT /categories/order` sets the display order from a list of ids
+- `GET /tasks/bin` lists deleted tasks, `POST /tasks/{id}/restore` takes one out, `DELETE /tasks/bin` empties the bin for good
 - `GET /tasks?categoryId=&priority=&status=&q=&sort=priority,-dueDate&page=&size=`
 - `POST /tasks`, `GET/PUT/PATCH/DELETE /tasks/{id}` (PATCH does partial updates, e.g. `{"status":"DONE"}`)
 - `GET /sync?since=<timestamp>`: every category and task changed since that time, including deletions. Mobile uses it for offline sync; web can ignore it.
@@ -80,8 +83,9 @@ The backend has no knowledge of any particular client. The web frontend and the 
 - **Lean payloads:** DTOs, never JPA entities. A task has `categoryId`, not a nested category.
 
 ## Frontend (v1 UI)
-- Left sidebar: categories with task counts, plus "All" and "Inbox". Add, rename, recolor categories.
-- Main pane: task list sorted/grouped by priority, color-coded priority badges, overdue highlight, checkbox to complete
+- Left sidebar: **Home** (all tasks of all categories) and Inbox, then the user's categories with task counts (drag the handle to reorder), then **Bin**. Add, rename, recolor categories.
+- Main pane: task list sorted/grouped by priority, color-coded priority badges, overdue highlight, the whole row opens the editor, checkbox marks a task Done (it stays in the list, below the open ones), trash icon moves it to the bin
+- Bin view: restore a task, or empty the bin (asks first; this is the final deletion)
 - Quick-add bar (title + priority + category), edit dialog for full details
 - Filters: status (open/done/all) and priority; sort selector
 - Vite dev proxy `/api` → `http://localhost:8080`

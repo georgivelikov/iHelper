@@ -21,6 +21,10 @@ public class Category extends BaseEntity {
 	@Column(length = 7)
 	private String color;
 
+	/** Display order within the owner's categories (0 first), set by drag-and-drop. */
+	@Column(nullable = false)
+	private int position;
+
 	public UUID getOwnerId() {
 		return ownerId;
 	}
@@ -43,6 +47,14 @@ public class Category extends BaseEntity {
 
 	public void setColor(String color) {
 		this.color = color;
+	}
+
+	public int getPosition() {
+		return position;
+	}
+
+	public void setPosition(int position) {
+		this.position = position;
 	}
 
 }

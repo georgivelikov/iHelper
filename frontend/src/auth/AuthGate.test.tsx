@@ -144,7 +144,7 @@ describe("AuthGate", () => {
     // The access token expires server-side; the next list request must recover on its own.
     state.validToken = "token-expired-then-rotated";
     state.nextToken = "token-3";
-    await userEvent.selectOptions(screen.getByLabelText("Show"), "all");
+    await userEvent.selectOptions(screen.getByLabelText("Show"), "open");
 
     await waitFor(() => expect(calls.refresh).toBe(refreshesAfterLoad + 1));
     await waitFor(() => expect(calls.taskAuth.at(-1)).toBe("Bearer token-3"));

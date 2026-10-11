@@ -14,7 +14,7 @@ test.describe("accounts", () => {
     await expect(page.getByLabel("New task title")).toHaveCount(0);
   });
 
-  test("create an account, start with the five categories, sign out and back in", async ({ page }) => {
+  test("create an account, start with the three categories, sign out and back in", async ({ page }) => {
     const auth = new AuthPage(page);
     const tasks = new TasksPage(page);
     const username = newName();
@@ -22,9 +22,7 @@ test.describe("accounts", () => {
 
     await auth.register(username, PASSWORD, process.env.E2E_INVITE_CODE ?? "");
     await auth.expectSignedInAs(username);
-    for (const name of ["Personal", "Work", "Home", "Shopping", "Ideas"]) {
-      await expect(tasks.category(name)).toBeVisible();
-    }
+    await expect.poll(() => tasks.categoryOrder()).toEqual(["Personal", "Ideas", "Work"]);
 
     await auth.signOut();
     await auth.expectSignedOut();

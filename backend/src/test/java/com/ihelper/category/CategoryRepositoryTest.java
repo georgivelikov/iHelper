@@ -58,7 +58,7 @@ class CategoryRepositoryTest {
 	@Test
 	void flywaySeedsTheFiveDefaultCategoriesForThePlaceholderUser() {
 		UUID placeholder = UUID.fromString("00000000-0000-0000-0000-000000000001");
-		assertThat(categories.findAllByOwnerIdAndDeletedAtIsNullOrderByNameAsc(placeholder)).extracting(Category::getName)
+		assertThat(categories.findAllByOwnerIdAndDeletedAtIsNullOrderByPositionAscNameAsc(placeholder)).extracting(Category::getName)
 			.contains("Personal", "Work", "Home", "Shopping", "Ideas");
 	}
 
@@ -111,7 +111,7 @@ class CategoryRepositoryTest {
 
 		assertThat(categories.findByIdAndOwnerIdAndDeletedAtIsNull(mine.getId(), owner)).isPresent();
 		assertThat(categories.findByIdAndOwnerIdAndDeletedAtIsNull(mine.getId(), otherOwner)).isEmpty();
-		assertThat(categories.findAllByOwnerIdAndDeletedAtIsNullOrderByNameAsc(otherOwner)).isEmpty();
+		assertThat(categories.findAllByOwnerIdAndDeletedAtIsNullOrderByPositionAscNameAsc(otherOwner)).isEmpty();
 	}
 
 }

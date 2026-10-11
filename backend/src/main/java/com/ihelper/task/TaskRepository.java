@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -16,6 +18,11 @@ public interface TaskRepository extends JpaRepository<Task, UUID>, JpaSpecificat
 	Optional<Task> findByIdAndOwnerIdAndDeletedAtIsNull(UUID id, UUID ownerId);
 
 	Optional<Task> findByIdAndOwnerId(UUID id, UUID ownerId);
+
+	/** The bin: soft-deleted tasks that have not been emptied yet. */
+	Page<Task> findByOwnerIdAndDeletedAtIsNotNullAndPurgedAtIsNull(UUID ownerId, Pageable pageable);
+
+	long countByOwnerIdAndDeletedAtIsNotNullAndPurgedAtIsNull(UUID ownerId);
 
 	/** Includes soft-deleted rows: this feeds {@code /sync}. */
 	List<Task> findByOwnerIdAndUpdatedAtGreaterThanOrderByUpdatedAtAsc(UUID ownerId, Instant since);
@@ -45,5 +52,18 @@ public interface TaskRepository extends JpaRepository<Task, UUID>, JpaSpecificat
 			 where t.ownerId = :ownerId and t.categoryId = :categoryId and t.deletedAt is null
 			""")
 	int moveToInbox(@Param("ownerId") UUID ownerId, @Param("categoryId") UUID categoryId, @Param("now") Instant now);
+
+	/**
+	 * Empties the bin: wipes the content of every binned task and leaves a tombstone so {@code /sync} still
+	 * reports it. Bulk update, so it bumps {@code updatedAt}/{@code version} itself.
+	 */
+	@Modifying(flushAutomatically = true, clearAutomatically = true)
+	@Query("""
+			update Task t
+			   set t.title = '', t.description = null, t.categoryId = null, t.dueDate = null, t.completedAt = null,
+			       t.purgedAt = :now, t.updatedAt = :now, t.version = t.version + 1
+			 where t.ownerId = :ownerId and t.deletedAt is not null and t.purgedAt is null
+			""")
+	int purgeBin(@Param("ownerId") UUID ownerId, @Param("now") Instant now);
 
 }

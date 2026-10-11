@@ -14,7 +14,7 @@ public record TaskDto(UUID id, String title,
 		@Schema(nullable = true) LocalDate dueDate,
 		@Schema(nullable = true) Instant completedAt,
 		Instant createdAt, Instant updatedAt, Long version,
-		@Schema(nullable = true, description = "Set when soft-deleted (only visible through /sync)") Instant deletedAt) {
+		@Schema(nullable = true, description = "Set when the task is in the bin (also reported by /sync)") Instant deletedAt) {
 
 	public static TaskDto from(Task t) {
 		return new TaskDto(t.getId(), t.getTitle(), t.getDescription(), t.getCategoryId(), t.getPriority(),

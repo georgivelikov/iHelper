@@ -102,6 +102,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/categories/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set the display order of categories
+         * @description Listed categories come first in the given order; unlisted ones follow in their current order. Returns every live category in the new order.
+         */
+        put: operations["reorder"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/categories/{id}": {
         parameters: {
             query?: never;
@@ -178,6 +198,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tasks/bin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the tasks in the bin, most recently deleted first */
+        get: operations["bin"];
+        put?: never;
+        post?: never;
+        /**
+         * Empty the bin: permanently erase every task in it
+         * @description The task content is wiped; only an id and a deleted marker stay so other devices learn about it through /sync. Cannot be undone.
+         */
+        delete: operations["emptyBin"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tasks/counts": {
         parameters: {
             query?: never;
@@ -207,7 +248,7 @@ export interface paths {
         put: operations["update"];
         post?: never;
         /**
-         * Soft-delete a task
+         * Move a task to the bin (soft delete)
          * @description Idempotent: deleting an already deleted task returns 204. An optional If-Match version guards against stale deletes.
          */
         delete: operations["delete"];
@@ -215,6 +256,26 @@ export interface paths {
         head?: never;
         /** Partially update a task, e.g. {"status":"DONE"} */
         patch: operations["patch"];
+        trace?: never;
+    };
+    "/api/v1/tasks/{id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Take a task out of the bin
+         * @description Idempotent for a task that is not in the bin. 404 once the bin has been emptied. An optional If-Match version guards against stale restores.
+         */
+        post: operations["restore"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
 }
@@ -232,6 +293,10 @@ export interface components {
             refreshToken?: string | null;
             tokenType: string;
             user: components["schemas"]["UserDto"];
+        };
+        BinEmptied: {
+            /** Format: int32 */
+            purged: number;
         };
         CategoryCreateRequest: {
             color?: string;
@@ -251,10 +316,18 @@ export interface components {
             /** Format: uuid */
             id: string;
             name: string;
+            /**
+             * Format: int32
+             * @description Display order, 0 first. Change it with PUT /categories/order
+             */
+            position: number;
             /** Format: date-time */
             updatedAt: string;
             /** Format: int64 */
             version: number;
+        };
+        CategoryReorderRequest: {
+            ids: string[];
         };
         CategoryUpdateRequest: {
             color?: string;
@@ -295,6 +368,8 @@ export interface components {
             tasks: components["schemas"]["TaskDto"][];
         };
         TaskCounts: {
+            /** Format: int64 */
+            bin: number;
             byCategory: {
                 [key: string]: number;
             };
@@ -341,7 +416,7 @@ export interface components {
             createdAt: string;
             /**
              * Format: date-time
-             * @description Set when soft-deleted (only visible through /sync)
+             * @description Set when the task is in the bin (also reported by /sync)
              */
             deletedAt?: string | null;
             description?: string | null;
@@ -560,6 +635,30 @@ export interface operations {
             };
         };
     };
+    reorder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CategoryReorderRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CategoryDto"][];
+                };
+            };
+        };
+    };
     get_1: {
         parameters: {
             query?: never;
@@ -733,6 +832,50 @@ export interface operations {
             };
         };
     };
+    bin: {
+        parameters: {
+            query?: {
+                /** @description Zero-based page number */
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageResponseTaskDto"];
+                };
+            };
+        };
+    };
+    emptyBin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BinEmptied"];
+                };
+            };
+        };
+    };
     counts: {
         parameters: {
             query?: never;
@@ -841,6 +984,30 @@ export interface operations {
                 "application/json": components["schemas"]["TaskPatchRequest"];
             };
         };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["TaskDto"];
+                };
+            };
+        };
+    };
+    restore: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description OK */
             200: {

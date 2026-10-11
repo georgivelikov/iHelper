@@ -58,6 +58,19 @@ public class TaskService {
 		return tasks.findAll(TaskSpecifications.matching(currentUser.id(), filter), pageable).map(TaskDto::from);
 	}
 
+	/** The bin, most recently deleted first. */
+	@Transactional(readOnly = true)
+	public Page<TaskDto> bin(int page, int size) {
+		if (page < 0) {
+			throw new BadRequestException("page must be >= 0");
+		}
+		if (size < 1 || size > MAX_PAGE_SIZE) {
+			throw new BadRequestException("size must be between 1 and " + MAX_PAGE_SIZE);
+		}
+		PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("deletedAt"), Sort.Order.asc("id")));
+		return tasks.findByOwnerIdAndDeletedAtIsNotNullAndPurgedAtIsNull(currentUser.id(), pageable).map(TaskDto::from);
+	}
+
 	@Transactional(readOnly = true)
 	public TaskCounts counts() {
 		long inbox = 0;
@@ -72,7 +85,8 @@ public class TaskService {
 				byCategory.put(row.getCategoryId(), row.getOpen());
 			}
 		}
-		return new TaskCounts(total, inbox, byCategory);
+		return new TaskCounts(total, inbox, byCategory,
+				tasks.countByOwnerIdAndDeletedAtIsNotNullAndPurgedAtIsNull(currentUser.id()));
 	}
 
 	@Transactional(readOnly = true)
@@ -164,6 +178,31 @@ public class TaskService {
 		checkVersion(task, expectedVersion);
 		task.setDeletedAt(clock.instant());
 		tasks.saveAndFlush(task);
+	}
+
+	/**
+	 * Takes a task out of the bin. Restoring a task that is not in the bin is a no-op; an emptied
+	 * (purged) task cannot come back. A task whose category was deleted meanwhile returns to Inbox.
+	 */
+	public TaskDto restore(UUID id, Long expectedVersion) {
+		Task task = tasks.findByIdAndOwnerId(id, currentUser.id())
+			.filter(t -> t.getPurgedAt() == null)
+			.orElseThrow(() -> new NotFoundException("Task", id));
+		if (!task.isDeleted()) {
+			return TaskDto.from(task);
+		}
+		checkVersion(task, expectedVersion);
+		task.setDeletedAt(null);
+		if (task.getCategoryId() != null
+				&& categories.findByIdAndOwnerIdAndDeletedAtIsNull(task.getCategoryId(), currentUser.id()).isEmpty()) {
+			task.setCategoryId(null);
+		}
+		return TaskDto.from(tasks.saveAndFlush(task));
+	}
+
+	/** Final deletion of everything in the bin. Returns how many tasks were erased. */
+	public int emptyBin() {
+		return tasks.purgeBin(currentUser.id(), clock.instant());
 	}
 
 	private Task find(UUID id) {

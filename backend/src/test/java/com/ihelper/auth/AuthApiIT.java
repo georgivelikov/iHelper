@@ -1,5 +1,6 @@
 package com.ihelper.auth;
 
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
@@ -43,8 +44,8 @@ class AuthApiIT extends AbstractIT {
 			.get("/api/v1/categories")
 			.then()
 			.statusCode(200)
-			.body("name", hasItems("Personal", "Work", "Home", "Shopping", "Ideas"))
-			.body("$", hasSize(5));
+			.body("name", contains("Personal", "Ideas", "Work"))
+			.body("$", hasSize(3));
 	}
 
 	private static io.restassured.specification.RequestSpecification given(String token) {

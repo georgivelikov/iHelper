@@ -4,6 +4,83 @@
  */
 
 export interface paths {
+    "/api/v1/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sign in with username and password
+         * @description 401 on bad credentials, 429 after repeated failures.
+         */
+        post: operations["login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revoke the refresh token and clear the cookie; idempotent */
+        post: operations["logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Trade a refresh token for a new access token (the refresh token rotates)
+         * @description The token comes from the request body (mobile) or the HttpOnly cookie (web).
+         */
+        post: operations["refresh"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create an account and sign in
+         * @description 403 when registration is closed or the invite code is wrong, 409 when the username is taken.
+         */
+        post: operations["register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/categories": {
         parameters: {
             query?: never;
@@ -41,6 +118,23 @@ export interface paths {
          * @description Idempotent: deleting an already deleted category returns 204. An optional If-Match version guards against stale deletes.
          */
         delete: operations["delete_1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The signed-in user */
+        get: operations["me"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -127,6 +221,18 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AuthResponse: {
+            accessToken: string;
+            /**
+             * Format: int64
+             * @description Access token lifetime in seconds
+             */
+            expiresIn: number;
+            /** @description Only present when the request sent X-Token-Transport: body (mobile). The web app gets it as an HttpOnly cookie instead. */
+            refreshToken?: string | null;
+            tokenType: string;
+            user: components["schemas"]["UserDto"];
+        };
         CategoryCreateRequest: {
             color?: string;
             /**
@@ -159,6 +265,10 @@ export interface components {
              */
             version?: number;
         };
+        LoginRequest: {
+            password: string;
+            username: string;
+        };
         PageResponseTaskDto: {
             items: components["schemas"]["TaskDto"][];
             /** Format: int32 */
@@ -167,6 +277,16 @@ export interface components {
             size: number;
             /** Format: int64 */
             total: number;
+        };
+        /** @description Mobile clients send the refresh token here; the web app relies on the HttpOnly cookie */
+        RefreshRequest: {
+            refreshToken?: string | null;
+        };
+        RegisterRequest: {
+            /** @description Required when the server runs registration in invite mode */
+            inviteCode?: string | null;
+            password: string;
+            username: string;
         };
         SyncResponse: {
             categories: components["schemas"]["CategoryDto"][];
@@ -277,6 +397,11 @@ export interface components {
              */
             version?: number;
         };
+        UserDto: {
+            /** Format: uuid */
+            id: string;
+            username: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -286,6 +411,111 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    login: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Token-Transport"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AuthResponse"];
+                };
+            };
+        };
+    };
+    logout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                ihelper_refresh?: string;
+            };
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RefreshRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    refresh: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Token-Transport"?: string;
+            };
+            path?: never;
+            cookie?: {
+                ihelper_refresh?: string;
+            };
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RefreshRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AuthResponse"];
+                };
+            };
+        };
+    };
+    register: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Send 'body' to receive the refresh token in the response body (mobile) */
+                "X-Token-Transport"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AuthResponse"];
+                };
+            };
+        };
+    };
     list_1: {
         parameters: {
             query?: never;
@@ -399,6 +629,26 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    me: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserDto"];
+                };
             };
         };
     };

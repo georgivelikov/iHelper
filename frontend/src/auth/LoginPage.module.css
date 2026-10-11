@@ -1,0 +1,67 @@
+.page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+.card {
+  width: 100%;
+  max-width: 22rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.card h1 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+.card h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+.card label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+}
+.card input {
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.hint {
+  margin: -0.4rem 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.error {
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  background: #fdecea;
+  color: #7f1d1d;
+  font-size: 0.9rem;
+}
+.primary {
+  padding: 0.55rem;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: white;
+}
+.primary:disabled {
+  opacity: 0.6;
+}
+.link {
+  border: 0;
+  background: none;
+  color: var(--accent);
+  padding: 0.25rem;
+}

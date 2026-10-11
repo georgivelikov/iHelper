@@ -1,5 +1,6 @@
 import { useState } from "react";
-import type { Priority, Task } from "@ihelper/api-client";
+import type { Priority, Task, User } from "@ihelper/api-client";
+import { signOut } from "./auth/session";
 import {
   useCategories,
   useCreateCategory,
@@ -22,7 +23,7 @@ import { TaskEditDialog } from "./components/TaskEditDialog";
 import { TaskList } from "./components/TaskList";
 import styles from "./App.module.css";
 
-export function App() {
+export function App({ user }: { user?: User }) {
   const [view, setView] = useState("all");
   const [status, setStatus] = useState<StatusFilter>("open");
   const [priority, setPriority] = useState<Priority | "">("");
@@ -78,6 +79,14 @@ export function App() {
     <div className={styles.layout}>
       <header className={styles.header}>
         <h1>iHelper</h1>
+        {user && (
+          <div className={styles.account}>
+            <span>{user.username}</span>
+            <button type="button" onClick={() => void signOut()}>
+              Sign out
+            </button>
+          </div>
+        )}
       </header>
       <aside className={styles.aside}>
         <CategorySidebar

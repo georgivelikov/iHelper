@@ -14,7 +14,10 @@
   padding: 0.5rem 0.6rem;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: var(--surface);
+  background-color: var(--surface);
+}
+.form select {
+  padding-right: 2rem;
 }
 .form button {
   background: var(--accent);

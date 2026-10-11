@@ -1,0 +1,22 @@
+.list {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.heading {
+  margin: 1rem 0 0.4rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.heading span {
+  font-weight: 400;
+}
+.empty {
+  color: var(--muted);
+  padding: 2rem 0;
+  text-align: center;
+}

@@ -18,6 +18,23 @@ public interface TaskRepository extends JpaRepository<Task, UUID>, JpaSpecificat
 	/** Includes soft-deleted rows: this feeds {@code /sync}. */
 	List<Task> findByUpdatedAtGreaterThanOrderByUpdatedAtAsc(Instant since);
 
+	interface CategoryCount {
+
+		UUID getCategoryId();
+
+		long getOpen();
+
+	}
+
+	/** Open (not DONE) live tasks per category; the null category is Inbox. */
+	@Query("""
+			select t.categoryId as categoryId, count(t) as open
+			  from Task t
+			 where t.deletedAt is null and t.status <> com.ihelper.task.TaskStatus.DONE
+			 group by t.categoryId
+			""")
+	List<CategoryCount> countOpenByCategory();
+
 	/** Bulk update bypasses the entity lifecycle, so it bumps {@code updatedAt}/{@code version} itself. */
 	@Modifying(flushAutomatically = true)
 	@Query("""

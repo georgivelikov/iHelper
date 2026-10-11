@@ -1,0 +1,42 @@
+.layout {
+  display: grid;
+  grid-template-columns: 16rem 1fr;
+  grid-template-areas:
+    "header header"
+    "aside main";
+  gap: 0 1.5rem;
+  max-width: 70rem;
+  margin: 0 auto;
+  padding: 0 1rem 2rem;
+}
+.header {
+  grid-area: header;
+}
+.header h1 {
+  margin: 1rem 0;
+  font-size: 1.4rem;
+}
+.aside {
+  grid-area: aside;
+}
+.main {
+  grid-area: main;
+  min-width: 0;
+}
+.note {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 720px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "header"
+      "aside"
+      "main";
+  }
+  .aside {
+    margin-bottom: 1rem;
+  }
+}

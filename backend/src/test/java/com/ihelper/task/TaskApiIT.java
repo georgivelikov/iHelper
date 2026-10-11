@@ -226,4 +226,30 @@ class TaskApiIT extends AbstractIT {
 			.body("detail", notNullValue());
 	}
 
+	@Test
+	void statusFilterAcceptsSeveralValues() {
+		String marker = unique("multi");
+		createTask(Map.of("title", marker + " todo", "status", "TODO"));
+		createTask(Map.of("title", marker + " doing", "status", "IN_PROGRESS"));
+		createTask(Map.of("title", marker + " done", "status", "DONE"));
+
+		api().queryParam("q", marker).queryParam("status", "TODO", "IN_PROGRESS").queryParam("sort", "title")
+			.get("/api/v1/tasks").then().statusCode(200)
+			.body("items.title", contains(marker + " doing", marker + " todo"));
+	}
+
+	@Test
+	void countsReportOpenTasksPerCategoryAndInbox() {
+		String cat = createCategory(unique("counted"));
+		createTask(Map.of("title", unique("c1"), "categoryId", cat));
+		createTask(Map.of("title", unique("c2"), "categoryId", cat, "status", "IN_PROGRESS"));
+		createTask(Map.of("title", unique("c3"), "categoryId", cat, "status", "DONE"));
+		createTask(Map.of("title", unique("inbox")));
+
+		api().get("/api/v1/tasks/counts").then().statusCode(200)
+			.body("byCategory." + cat, equalTo(2))
+			.body("inbox", org.hamcrest.Matchers.greaterThanOrEqualTo(1))
+			.body("total", org.hamcrest.Matchers.greaterThanOrEqualTo(3));
+	}
+
 }

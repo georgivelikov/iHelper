@@ -24,7 +24,7 @@
       "CategoryDto" : {
         "properties" : {
           "color" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "createdAt" : {
             "format" : "date-time",
@@ -32,7 +32,7 @@
           },
           "deletedAt" : {
             "format" : "date-time",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "id" : {
             "format" : "uuid",
@@ -50,6 +50,7 @@
             "type" : "integer"
           }
         },
+        "required" : [ "createdAt", "id", "name", "updatedAt", "version" ],
         "type" : "object"
       },
       "CategoryUpdateRequest" : {
@@ -93,6 +94,7 @@
             "type" : "integer"
           }
         },
+        "required" : [ "items", "page", "size", "total" ],
         "type" : "object"
       },
       "SyncResponse" : {
@@ -114,6 +116,28 @@
             "type" : "array"
           }
         },
+        "required" : [ "categories", "serverTime", "tasks" ],
+        "type" : "object"
+      },
+      "TaskCounts" : {
+        "properties" : {
+          "byCategory" : {
+            "additionalProperties" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "type" : "object"
+          },
+          "inbox" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "total" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "byCategory", "inbox", "total" ],
         "type" : "object"
       },
       "TaskCreateRequest" : {
@@ -159,27 +183,29 @@
       "TaskDto" : {
         "properties" : {
           "categoryId" : {
+            "description" : "Null means Inbox",
             "format" : "uuid",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "completedAt" : {
             "format" : "date-time",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "createdAt" : {
             "format" : "date-time",
             "type" : "string"
           },
           "deletedAt" : {
+            "description" : "Set when soft-deleted (only visible through /sync)",
             "format" : "date-time",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "description" : {
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "dueDate" : {
             "format" : "date",
-            "type" : "string"
+            "type" : [ "string", "null" ]
           },
           "id" : {
             "format" : "uuid",
@@ -205,6 +231,7 @@
             "type" : "integer"
           }
         },
+        "required" : [ "createdAt", "id", "priority", "status", "title", "updatedAt", "version" ],
         "type" : "object"
       },
       "TaskPatchRequest" : {
@@ -491,12 +518,17 @@
             "type" : "string"
           }
         }, {
+          "description" : "Repeatable: status=TODO&status=IN_PROGRESS",
           "in" : "query",
           "name" : "status",
           "required" : false,
           "schema" : {
-            "enum" : [ "TODO", "IN_PROGRESS", "DONE" ],
-            "type" : "string"
+            "items" : {
+              "enum" : [ "TODO", "IN_PROGRESS", "DONE" ],
+              "type" : "string"
+            },
+            "type" : "array",
+            "uniqueItems" : true
           }
         }, {
           "description" : "Case-insensitive search in title and description",
@@ -575,6 +607,25 @@
           }
         },
         "summary" : "Create a task",
+        "tags" : [ "Tasks" ]
+      }
+    },
+    "/api/v1/tasks/counts" : {
+      "get" : {
+        "operationId" : "counts",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TaskCounts"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Number of open (not DONE) tasks in total, in Inbox and per category",
         "tags" : [ "Tasks" ]
       }
     },

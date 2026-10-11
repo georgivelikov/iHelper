@@ -1,0 +1,20 @@
+{
+  "name": "@ihelper/api-client",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "generate": "openapi-typescript ../backend/src/test/resources/openapi-snapshot.json -o src/schema.d.ts",
+    "generate:live": "openapi-typescript http://localhost:8080/v3/api-docs -o src/schema.d.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.14.0"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.9.0",
+    "typescript": "~5.9.0"
+  }
+}

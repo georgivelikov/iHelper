@@ -25,8 +25,8 @@ final class TaskSpecifications {
 			if (filter.priority() != null) {
 				predicates.add(cb.equal(root.get("priority"), filter.priority()));
 			}
-			if (filter.status() != null) {
-				predicates.add(cb.equal(root.get("status"), filter.status()));
+			if (filter.statuses() != null && !filter.statuses().isEmpty()) {
+				predicates.add(root.get("status").in(filter.statuses()));
 			}
 			if (filter.q() != null && !filter.q().isBlank()) {
 				String pattern = "%" + escapeLike(filter.q().trim().toLowerCase()) + "%";

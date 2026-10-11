@@ -1,0 +1,13 @@
+.banner {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 0.9rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  background: #fdecea;
+  color: #7f1d1d;
+}
+.banner ul { margin: 0.25rem 0 0; padding-left: 1.2rem; }
+.banner button { border: 0; background: none; font-size: 1.2rem; }

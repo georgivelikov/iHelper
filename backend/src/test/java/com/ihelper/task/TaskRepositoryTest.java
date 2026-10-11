@@ -56,7 +56,7 @@ class TaskRepositoryTest {
 	}
 
 	private static TaskFilter filter(UUID categoryId, Priority p, TaskStatus s, String q) {
-		return new TaskFilter(categoryId, false, p, s, q);
+		return new TaskFilter(categoryId, false, p, s == null ? null : java.util.Set.of(s), q);
 	}
 
 	@Test

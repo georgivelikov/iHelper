@@ -16,6 +16,14 @@ cd backend
 Spring Boot starts PostgreSQL from `docker-compose.yml` automatically and connects to it.
 Data lives in the Docker volume `ihelper-pgdata`. The app listens on http://localhost:8080.
 
+Web UI (second terminal, backend must be running):
+```
+cd frontend
+npm install
+npm run dev                  # http://localhost:5173, proxies /api to :8080
+```
+API docs: http://localhost:8080/swagger-ui
+
 Start/stop the database by hand:
 ```
 docker compose up -d postgres
@@ -28,8 +36,16 @@ cd backend
 ./mvnw verify
 ```
 Integration tests start their own PostgreSQL via Testcontainers (Docker must be running).
+```
+cd frontend
+npm test                     # Vitest + React Testing Library + MSW
+```
+After an API change: `cd backend && ./mvnw verify -Dopenapi.update=true`, then
+`cd api-client && npm run generate` and commit both.
 
 ## Repo layout
 - `backend/` Spring Boot app
+- `api-client/` TypeScript types + typed fetch client generated from the OpenAPI snapshot
+- `frontend/` React + TypeScript + Vite UI
 - `docker-compose.yml`, `docker/` local PostgreSQL (also creates the `ihelper_e2e` database)
 - `docs/` plan, architecture, per-phase checklists

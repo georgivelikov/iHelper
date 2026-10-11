@@ -2,7 +2,9 @@ package com.ihelper.task;
 
 import java.time.Clock;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -49,6 +51,23 @@ public class TaskService {
 		}
 		PageRequest pageable = PageRequest.of(page, size, parseSort(sort));
 		return tasks.findAll(TaskSpecifications.matching(filter), pageable).map(TaskDto::from);
+	}
+
+	@Transactional(readOnly = true)
+	public TaskCounts counts() {
+		long inbox = 0;
+		long total = 0;
+		Map<UUID, Long> byCategory = new LinkedHashMap<>();
+		for (var row : tasks.countOpenByCategory()) {
+			total += row.getOpen();
+			if (row.getCategoryId() == null) {
+				inbox = row.getOpen();
+			}
+			else {
+				byCategory.put(row.getCategoryId(), row.getOpen());
+			}
+		}
+		return new TaskCounts(total, inbox, byCategory);
 	}
 
 	@Transactional(readOnly = true)

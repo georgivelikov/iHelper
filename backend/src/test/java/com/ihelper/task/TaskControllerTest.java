@@ -62,7 +62,7 @@ class TaskControllerTest {
 			.andExpect(jsonPath("$.total").value(11));
 
 		verify(service).list(
-				new TaskFilter(null, false, Priority.HIGH, TaskStatus.TODO, "milk"), "-priority", 1, 5);
+				new TaskFilter(null, false, Priority.HIGH, java.util.Set.of(TaskStatus.TODO), "milk"), "-priority", 1, 5);
 	}
 
 	@Test

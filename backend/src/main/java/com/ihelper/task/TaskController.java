@@ -54,7 +54,7 @@ public class TaskController {
 			@Parameter(description = "true = only tasks without a category (Inbox); overrides categoryId")
 			@RequestParam(defaultValue = "false") boolean inbox,
 			@RequestParam(required = false) Priority priority,
-			@RequestParam(required = false) TaskStatus status,
+			@Parameter(description = "Repeatable: status=TODO&status=IN_PROGRESS") @RequestParam(required = false) Set<TaskStatus> status,
 			@Parameter(description = "Case-insensitive search in title and description") @RequestParam(required = false) String q,
 			@Parameter(description = "Comma separated fields, '-' prefix = descending, e.g. priority,-dueDate. "
 					+ "Fields: priority, dueDate, createdAt, updatedAt, title, status. Default: -priority,dueDate,createdAt")
@@ -63,6 +63,12 @@ public class TaskController {
 			@RequestParam(defaultValue = "50") int size) {
 		var filter = new TaskFilter(categoryId, inbox, priority, status, q);
 		return PageResponse.of(service.list(filter, sort, page, size));
+	}
+
+	@GetMapping("/counts")
+	@Operation(summary = "Number of open (not DONE) tasks in total, in Inbox and per category")
+	public TaskCounts counts() {
+		return service.counts();
 	}
 
 	@GetMapping("/{id}")

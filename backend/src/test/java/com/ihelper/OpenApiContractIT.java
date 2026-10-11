@@ -35,16 +35,16 @@ class OpenApiContractIT extends AbstractIT {
 		JsonNode tree = PRETTY.readTree(raw);
 		// the server URL contains the random test port
 		((ObjectNode) tree).remove("servers");
-		String actual = PRETTY.writeValueAsString(PRETTY.treeToValue(tree, Object.class)) + "\n";
+		// Jackson's pretty printer uses the platform line separator; the snapshot is always LF
+		String actual = PRETTY.writeValueAsString(PRETTY.treeToValue(tree, Object.class)).replace("\r\n", "\n")
+				+ "\n";
 
 		if (Boolean.getBoolean("openapi.update") || Files.notExists(SNAPSHOT)) {
 			Files.createDirectories(SNAPSHOT.getParent());
 			Files.writeString(SNAPSHOT, actual, StandardCharsets.UTF_8);
 		}
 
-		String expected = Files.readString(SNAPSHOT, StandardCharsets.UTF_8).replace("
-", "
-");
+		String expected = Files.readString(SNAPSHOT, StandardCharsets.UTF_8).replace("\r\n", "\n");
 		assertThat(actual)
 			.as("OpenAPI contract changed. If intended, rerun with -Dopenapi.update=true and commit the snapshot.")
 			.isEqualTo(expected);

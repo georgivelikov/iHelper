@@ -1,0 +1,12 @@
+**/node_modules
+**/dist
+**/target
+**/coverage
+**/test-results
+**/playwright-report
+.git
+.github
+.idea
+.vscode
+docs
+e2e

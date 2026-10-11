@@ -11,6 +11,10 @@ spring:
     url: jdbc:postgresql://localhost:5432/ihelper
     username: ihelper
     password: ihelper
+  web:
+    resources:
+      # SpaConfig serves the bundled frontend (with index.html fallback) instead of Boot's default handler
+      add-mappings: false
   jpa:
     open-in-view: false
     hibernate:

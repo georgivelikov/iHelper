@@ -30,6 +30,15 @@ docker compose up -d postgres
 docker compose down          # keeps data; add -v to wipe it
 ```
 
+## Run modes
+| Mode | Command | URL |
+|---|---|---|
+| Dev (hot reload) | `cd backend && ./mvnw spring-boot:run`, then `cd frontend && npm run dev` | http://localhost:5173 |
+| Single jar | `cd backend && ./mvnw -Pbundle-frontend -DskipTests package`, then `java -jar target/ihelper-0.0.1-SNAPSHOT.jar` (needs Postgres: `docker compose up -d postgres`) | http://localhost:8080 |
+| Docker Compose | `docker compose --profile app up --build` (app + Postgres, data in the `ihelper-pgdata` volume) | http://localhost:8080 |
+
+The jar and the image serve the website and the API from one origin; Swagger UI is at `/swagger-ui`.
+
 ## Test
 ```
 cd backend

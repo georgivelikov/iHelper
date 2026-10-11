@@ -13,7 +13,7 @@ Design principle: a clean REST API in Java and a separate TypeScript frontend. T
 | 2 | [Backend API](phases/phase-2-backend-api.md) | Categories/tasks/sync API, Swagger UI, all backend tests | Done (awaiting review) |
 | 3 | [Frontend](phases/phase-3-frontend.md) | `api-client` + React UI + component tests | Done (awaiting review) |
 | 4 | [E2E tests](phases/phase-4-e2e.md) | Playwright (desktop + mobile viewport) in CI | Done (awaiting review) |
-| 5 | [Packaging](phases/phase-5-packaging.md) | Single jar + Dockerfile + compose; runs as hosted | Not started |
+| 5 | [Packaging](phases/phase-5-packaging.md) | Single jar + Dockerfile + compose; runs as hosted | Done (awaiting review) |
 | 6 | [Web hosting](phases/phase-6-web-hosting.md) | Login (JWT), prod profile, host, HTTPS, backups | Not planned in detail |
 | 7 | [Mobile](phases/phase-7-mobile.md) | Expo/React Native app with offline sync | Not planned in detail |
 

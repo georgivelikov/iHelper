@@ -17,5 +17,22 @@ services:
       timeout: 3s
       retries: 10
 
+  # The whole app (API + bundled website) as it would be hosted: docker compose --profile app up --build
+  app:
+    profiles: ["app"]
+    build:
+      context: .
+    container_name: ihelper-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ihelper
+      SPRING_DATASOURCE_USERNAME: ihelper
+      SPRING_DATASOURCE_PASSWORD: ihelper
+      SPRING_DOCKER_COMPOSE_ENABLED: "false"
+    ports:
+      - "8080:8080"
+
 volumes:
   ihelper-pgdata:

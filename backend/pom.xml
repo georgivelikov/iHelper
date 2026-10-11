@@ -31,6 +31,8 @@
 		<springdoc.version>3.1.1</springdoc.version>
 		<rest-assured.version>6.1.0</rest-assured.version>
 		<jacoco.version>0.8.15</jacoco.version>
+		<frontend-maven-plugin.version>1.15.1</frontend-maven-plugin.version>
+		<node.version>v22.19.0</node.version>
 		<!-- filled in by jacoco:prepare-agent; must exist so surefire's @{argLine} resolves without it -->
 		<argLine></argLine>
 	</properties>
@@ -168,5 +170,93 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<!--
+			Bundles the React app into the jar: ./mvnw -Pbundle-frontend package
+			Off by default so `mvn verify` stays fast and needs no Node. The Dockerfile uses it.
+			Frontend and api-client are built in place (their node_modules/dist stay git-ignored);
+			the result is copied to target/classes/static, never into src.
+		-->
+		<profile>
+			<id>bundle-frontend</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>com.github.eirslett</groupId>
+						<artifactId>frontend-maven-plugin</artifactId>
+						<version>${frontend-maven-plugin.version}</version>
+						<configuration>
+							<installDirectory>${project.build.directory}/node-install</installDirectory>
+							<nodeVersion>${node.version}</nodeVersion>
+						</configuration>
+						<executions>
+							<execution>
+								<id>install-node</id>
+								<phase>generate-resources</phase>
+								<goals>
+									<goal>install-node-and-npm</goal>
+								</goals>
+							</execution>
+							<execution>
+								<id>api-client-npm-ci</id>
+								<phase>generate-resources</phase>
+								<goals>
+									<goal>npm</goal>
+								</goals>
+								<configuration>
+									<workingDirectory>${project.basedir}/../api-client</workingDirectory>
+									<arguments>ci</arguments>
+								</configuration>
+							</execution>
+							<execution>
+								<id>frontend-npm-ci</id>
+								<phase>generate-resources</phase>
+								<goals>
+									<goal>npm</goal>
+								</goals>
+								<configuration>
+									<workingDirectory>${project.basedir}/../frontend</workingDirectory>
+									<arguments>ci</arguments>
+								</configuration>
+							</execution>
+							<execution>
+								<id>frontend-build</id>
+								<phase>generate-resources</phase>
+								<goals>
+									<goal>npm</goal>
+								</goals>
+								<configuration>
+									<workingDirectory>${project.basedir}/../frontend</workingDirectory>
+									<arguments>run build</arguments>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-resources-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>copy-frontend-dist</id>
+								<phase>process-resources</phase>
+								<goals>
+									<goal>copy-resources</goal>
+								</goals>
+								<configuration>
+									<outputDirectory>${project.build.outputDirectory}/static</outputDirectory>
+									<resources>
+										<resource>
+											<directory>${project.basedir}/../frontend/dist</directory>
+										</resource>
+									</resources>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
 </project>

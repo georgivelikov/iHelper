@@ -1,0 +1,34 @@
+# Maven / Java
+target/
+*.class
+*.log
+hs_err_pid*
+
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Playwright
+playwright-report/
+test-results/
+blob-report/
+.cache/
+
+# Coverage
+coverage/
+
+# IDE / OS
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+.DS_Store
+Thumbs.db

@@ -4,7 +4,7 @@ Personal TODO app for one user (Georgi). Tasks live in **categories** and have *
 Roadmap: **local first → hosted web app → mobile app**. Preferred tech: **Java + TypeScript**.
 
 ## Current status
-**Phase 3 (Frontend) done, awaiting user review.** Next: Phase 4 (see `docs/phases/phase-4-e2e.md`). Spring Boot is 4.1.1 (Initializr no longer offers 3.x).
+**Phase 4 (E2E tests) done, awaiting user review.** Next: Phase 5 (see `docs/phases/phase-5-packaging.md`). Spring Boot is 4.1.1 (Initializr no longer offers 3.x).
 Update this line whenever a phase starts or finishes.
 
 ## Where things are

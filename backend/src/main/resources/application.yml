@@ -42,7 +42,15 @@ spring:
   docker:
     compose:
       enabled: false
-# Phase 4 adds: Flyway clean + migrate at startup
+  flyway:
+    # E2eDatabaseConfig cleans and migrates at startup; only this profile may clean.
+    clean-disabled: false
+server:
+  port: 8081
+ihelper:
+  cors:
+    # Vite dev server used by Playwright; the proxy forwards its Origin header unchanged.
+    allowed-origins: http://localhost:5174
 
 ---
 spring:

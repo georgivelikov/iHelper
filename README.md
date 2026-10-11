@@ -40,6 +40,15 @@ Integration tests start their own PostgreSQL via Testcontainers (Docker must be 
 cd frontend
 npm test                     # Vitest + React Testing Library + MSW
 ```
+```
+cd e2e
+npm install && npx playwright install chromium    # first time
+npx playwright test                               # desktop + mobile viewport
+npx playwright show-report
+```
+Playwright starts the backend (`e2e` profile, port 8081, database `ihelper_e2e`, wiped on every start)
+and the Vite frontend (port 5174) itself. Postgres must be running: `docker compose up -d postgres`.
+
 After an API change: `cd backend && ./mvnw verify -Dopenapi.update=true`, then
 `cd api-client && npm run generate` and commit both.
 
@@ -47,5 +56,6 @@ After an API change: `cd backend && ./mvnw verify -Dopenapi.update=true`, then
 - `backend/` Spring Boot app
 - `api-client/` TypeScript types + typed fetch client generated from the OpenAPI snapshot
 - `frontend/` React + TypeScript + Vite UI
+- `e2e/` Playwright end-to-end tests
 - `docker-compose.yml`, `docker/` local PostgreSQL (also creates the `ihelper_e2e` database)
 - `docs/` plan, architecture, per-phase checklists

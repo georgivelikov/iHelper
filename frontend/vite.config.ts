@@ -7,7 +7,8 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      "/api": "http://localhost:8080",
+      // Playwright points this at the e2e backend (port 8081) so it never touches the dev one.
+      "/api": process.env.API_PROXY_TARGET ?? "http://localhost:8080",
     },
   },
   test: {

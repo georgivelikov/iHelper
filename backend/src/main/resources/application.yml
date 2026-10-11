@@ -1,0 +1,48 @@
+spring:
+  application:
+    name: ihelper
+  docker:
+    compose:
+      # compose file lives at the repo root, shared by dev and (later) the packaged app
+      file: ../docker-compose.yml
+      lifecycle-management: start-only
+  datasource:
+    # Used when not started through docker compose (e.g. the e2e and prod profiles override this).
+    url: jdbc:postgresql://localhost:5432/ihelper
+    username: ihelper
+    password: ihelper
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+
+server:
+  port: 8080
+
+---
+spring:
+  config:
+    activate:
+      on-profile: e2e
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ihelper_e2e
+  docker:
+    compose:
+      enabled: false
+# Phase 4 adds: Flyway clean + migrate at startup
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  docker:
+    compose:
+      enabled: false
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+# Phase 6 adds: JWT auth, CORS, actuator

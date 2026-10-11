@@ -9,7 +9,7 @@ Design principle: a clean REST API in Java and a separate TypeScript frontend. T
 
 | # | Phase | Outcome | Status |
 |---|---|---|---|
-| 1 | [Foundation](phases/phase-1-foundation.md) | Repo linked, Spring Boot boots, Postgres in Docker, basic CI | Not started |
+| 1 | [Foundation](phases/phase-1-foundation.md) | Repo linked, Spring Boot boots, Postgres in Docker, basic CI | Done (awaiting review) |
 | 2 | [Backend API](phases/phase-2-backend-api.md) | Categories/tasks/sync API, Swagger UI, all backend tests | Not started |
 | 3 | [Frontend](phases/phase-3-frontend.md) | `api-client` + React UI + component tests | Not started |
 | 4 | [E2E tests](phases/phase-4-e2e.md) | Playwright (desktop + mobile viewport) in CI | Not started |
@@ -20,7 +20,7 @@ Design principle: a clean REST API in Java and a separate TypeScript frontend. T
 **v1 complete = Phases 1–5.** Backlog (any time after v1): tags, recurring tasks, reminders/notifications, search, archive.
 
 ## Stack
-- **Backend:** Java 25, Spring Boot 3 (Web, Data JPA, Validation), Maven, Flyway
+- **Backend:** Java 25, Spring Boot 4.1 (Web, Data JPA, Validation), Maven, Flyway
 - **Database:** PostgreSQL everywhere (local dev, tests, e2e, hosted), in Docker. No H2. `spring-boot-docker-compose` starts the `postgres` service from `docker-compose.yml` on `mvn spring-boot:run`. Named volume `ihelper-pgdata`. Flyway manages the schema.
 - **Frontend:** React + TypeScript + Vite, TanStack Query, plain CSS modules (no heavy UI kit)
 - **Tests:** JUnit 5, Testcontainers, Vitest, Playwright

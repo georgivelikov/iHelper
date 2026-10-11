@@ -9,6 +9,13 @@ See `docs/PLAN.md` for the plan and phase status, `docs/ARCHITECTURE.md` for the
 - Node 22+ (from Phase 3)
 
 ## Run locally
+One command on Windows (PowerShell): starts PostgreSQL, the backend and the web UI, and waits until they are up.
+```
+scripts\start.ps1            # http://localhost:5173, logs in .run\
+scripts\stop.ps1             # add -KeepDatabase to leave PostgreSQL running
+```
+
+Or by hand:
 ```
 cd backend
 ./mvnw spring-boot:run

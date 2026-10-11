@@ -20,6 +20,9 @@ test-results/
 blob-report/
 .cache/
 
+# Local dev run logs (scripts/start.ps1)
+.run/
+
 # Coverage
 coverage/
 

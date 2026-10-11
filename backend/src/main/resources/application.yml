@@ -21,6 +21,17 @@ spring:
 server:
   port: 8080
 
+springdoc:
+  swagger-ui:
+    path: /swagger-ui
+  api-docs:
+    path: /v3/api-docs
+
+ihelper:
+  cors:
+    # comma separated; add the hosted web origin in the prod profile
+    allowed-origins: http://localhost:5173
+
 ---
 spring:
   config:

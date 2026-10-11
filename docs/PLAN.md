@@ -10,7 +10,7 @@ Design principle: a clean REST API in Java and a separate TypeScript frontend. T
 | # | Phase | Outcome | Status |
 |---|---|---|---|
 | 1 | [Foundation](phases/phase-1-foundation.md) | Repo linked, Spring Boot boots, Postgres in Docker, basic CI | Done (awaiting review) |
-| 2 | [Backend API](phases/phase-2-backend-api.md) | Categories/tasks/sync API, Swagger UI, all backend tests | Not started |
+| 2 | [Backend API](phases/phase-2-backend-api.md) | Categories/tasks/sync API, Swagger UI, all backend tests | Done (awaiting review) |
 | 3 | [Frontend](phases/phase-3-frontend.md) | `api-client` + React UI + component tests | Not started |
 | 4 | [E2E tests](phases/phase-4-e2e.md) | Playwright (desktop + mobile viewport) in CI | Not started |
 | 5 | [Packaging](phases/phase-5-packaging.md) | Single jar + Dockerfile + compose; runs as hosted | Not started |

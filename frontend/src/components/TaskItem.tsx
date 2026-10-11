@@ -25,7 +25,7 @@ export function TaskItem({ task, category, onToggle, onEdit, onDelete }: Props) 
   // Clicking the row expands it to show the description. The title stays a real button (so the keyboard
   // can toggle it; its click bubbles up to the row); the checkbox and the icons act on their own.
   return (
-    <li className={className} data-overdue={overdue || undefined} onClick={() => setExpanded((open) => !open)}>
+    <li className={className} data-priority={task.priority} data-overdue={overdue || undefined} onClick={() => setExpanded((open) => !open)}>
       <input
         type="checkbox"
         checked={done}

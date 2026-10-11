@@ -5,12 +5,28 @@
   padding: 0.6rem 0.75rem;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-left: 4px solid transparent;
+  border-left: 4px solid var(--border);
   border-radius: 8px;
   cursor: pointer;
 }
+/* The left edge carries the priority colour, so it is visible on every row. */
+.item[data-priority="URGENT"] {
+  border-left-color: var(--urgent);
+}
+.item[data-priority="HIGH"] {
+  border-left-color: var(--high);
+}
+.item[data-priority="MEDIUM"] {
+  border-left-color: var(--medium);
+}
+.item[data-priority="LOW"] {
+  border-left-color: var(--low);
+}
+/* Hover only touches the other three sides, never the coloured edge. */
 .item:hover {
-  border-color: #c9ccd8;
+  border-top-color: #c9ccd8;
+  border-right-color: #c9ccd8;
+  border-bottom-color: #c9ccd8;
 }
 .doneChip {
   padding: 0.05rem 0.5rem;
@@ -57,7 +73,7 @@
   color: var(--muted);
   font-style: italic;
 }
-.overdue {
+.item.overdue {
   border-left-color: var(--danger);
   background: #fff6f5;
 }

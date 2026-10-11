@@ -23,11 +23,34 @@
   font-size: 0.9rem;
   color: var(--muted);
 }
-.account button {
-  padding: 0.3rem 0.6rem;
+.account span {
+  font-weight: 600;
+  color: var(--text);
+}
+.signOut {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 999px;
   background: var(--surface);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+.signOut:hover {
+  border-color: var(--danger);
+  background: #fdecea;
+  color: var(--danger);
+}
+.signOut:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.signOut:active {
+  background: #fbd9d6;
 }
 .header h1 {
   margin: 1rem 0;

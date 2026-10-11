@@ -64,7 +64,7 @@ The backend has no knowledge of any particular client. The web frontend and the 
 **Endpoints**
 - `GET/POST /categories`, `GET/PUT/DELETE /categories/{id}` (deleting a category moves its tasks to Inbox)
 - `PUT /categories/order` sets the display order from a list of ids
-- `GET /tasks/bin` lists deleted tasks, `POST /tasks/{id}/restore` takes one out, `DELETE /tasks/bin` empties the bin for good
+- `GET /tasks/bin` lists deleted tasks, `POST /tasks/{id}/restore` takes one out, `POST /tasks/bin/purge` erases only the chosen tasks, `DELETE /tasks/bin` empties the bin for good
 - `GET /tasks?categoryId=&priority=&status=&q=&sort=priority,-dueDate&page=&size=`
 - `POST /tasks`, `GET/PUT/PATCH/DELETE /tasks/{id}` (PATCH does partial updates, e.g. `{"status":"DONE"}`)
 - `GET /sync?since=<timestamp>`: every category and task changed since that time, including deletions. Mobile uses it for offline sync; web can ignore it.
@@ -85,7 +85,7 @@ The backend has no knowledge of any particular client. The web frontend and the 
 ## Frontend (v1 UI)
 - Left sidebar: **Home** (all tasks of all categories) and Inbox, then the user's categories with task counts (drag the handle to reorder), then **Bin**. Add, rename, recolor categories.
 - Main pane: task list sorted/grouped by priority, color-coded priority badges, overdue highlight, clicking a row expands it to show the description, the pencil icon opens the editor, checkbox marks a task Done (it stays in the list, below the open ones), trash icon moves it to the bin
-- Bin view: restore a task, or empty the bin (asks first; this is the final deletion)
+- Bin view: restore a task, tick tasks and delete only those, or empty the bin (always asks first; erasing is final)
 - Quick-add bar (title + priority + category), edit dialog for full details
 - Filters: status (open/done/all) and priority; sort selector
 - Vite dev proxy `/api` → `http://localhost:8080`

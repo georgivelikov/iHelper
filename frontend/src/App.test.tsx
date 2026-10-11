@@ -79,13 +79,18 @@ describe("App", () => {
     expect(titles[1]).toContain("Finished low");
   });
 
-  it("opens the editor from anywhere on the row, not only the title", async () => {
-    setup([makeTask({ id: "t1", title: "Ship release", priority: "URGENT" })]);
+  it("clicking a row expands it with the description; the edit icon opens the editor", async () => {
+    setup([makeTask({ id: "t1", title: "Ship release", priority: "URGENT", description: "Tag it, then deploy" })]);
     await screen.findByText("Ship release");
+    expect(screen.queryByText("Tag it, then deploy")).not.toBeInTheDocument();
 
     const row = within(screen.getByRole("region", { name: "Urgent priority" })).getByRole("listitem");
     await userEvent.click(within(row).getByText("Urgent")); // the badge, not the title
 
+    expect(await within(row).findByText("Tag it, then deploy")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    await userEvent.click(within(row).getByRole("button", { name: "Edit Ship release" }));
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
   });
 
@@ -137,7 +142,7 @@ describe("App", () => {
 
   it("deleting from the editor also moves the task to the bin", async () => {
     const api = setup([makeTask({ id: "t1", title: "Ship release" })]);
-    await userEvent.click(await screen.findByRole("button", { name: "Ship release" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Edit Ship release" }));
 
     await userEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Delete" }));
 
@@ -188,7 +193,7 @@ describe("App", () => {
     const api = setup([
       makeTask({ id: "t1", title: "Ship release", priority: "HIGH", dueDate: "2999-01-01", version: 4 }),
     ]);
-    await userEvent.click(await screen.findByRole("button", { name: "Ship release" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Edit Ship release" }));
 
     const dialog = screen.getByRole("dialog");
     const title = within(dialog).getByLabelText("Title");
@@ -207,7 +212,7 @@ describe("App", () => {
     const api = setup([makeTask({ id: "t1", title: "Ship release", version: 0 })]);
     api.state.forceConflict.set("t1", makeTask({ id: "t1", title: "Ship release (edited elsewhere)", version: 3 }));
 
-    await userEvent.click(await screen.findByRole("button", { name: "Ship release" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Edit Ship release" }));
     const dialog = screen.getByRole("dialog");
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
 

@@ -46,7 +46,7 @@ export class TasksPage {
     return this.page
       .locator("li")
       .filter({ has: this.page.getByRole("checkbox") })
-      .locator('button:not([aria-label^="Delete "])')
+      .locator('button:not([aria-label^="Delete "]):not([aria-label^="Edit "])')
       .allInnerTexts();
   }
 
@@ -97,8 +97,9 @@ export class TasksPage {
   }
 
   // --- edit dialog ---
+  /** The edit icon on a row opens the editor. (Clicking the row itself only expands it.) */
   async openEditor(title: string) {
-    await this.task(title).click();
+    await this.page.getByRole("button", { name: `Edit ${title}`, exact: true }).click();
     await expect(this.dialog).toBeVisible();
   }
 

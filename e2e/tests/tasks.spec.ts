@@ -65,16 +65,25 @@ test.describe("tasks", () => {
     expect(await tasks.titles()).toEqual([`${tag} open`, `${tag} finished`]);
   });
 
-  test("clicking anywhere on the row opens the editor", async ({ tasks, api }) => {
+  test("clicking a row expands it to show the description, and the edit icon opens the editor", async ({ tasks, api }) => {
     const title = api.uniq("Click row");
-    await api.createTask({ title, priority: "HIGH" });
+    const description = `Details for ${title}`;
+    await api.createTask({ title, priority: "HIGH", description });
     await tasks.goto();
     await tasks.search(title);
+    await expect(tasks.page.getByText(description)).toHaveCount(0);
 
     await tasks.page.getByRole("region", { name: "High priority" }).getByText("High", { exact: true }).last().click();
 
-    await expect(tasks.dialog).toBeVisible();
+    await expect(tasks.page.getByText(description)).toBeVisible();
+    await expect(tasks.dialog).toBeHidden();
+
+    await tasks.task(title).click(); // the title toggles it again
+    await expect(tasks.page.getByText(description)).toHaveCount(0);
+
+    await tasks.openEditor(title);
     await expect(tasks.dialog.getByLabel("Title")).toHaveValue(title);
+    await expect(tasks.dialog.getByLabel("Description")).toHaveValue(description);
   });
 
   test("delete icon moves a task to the bin, and it can be restored", async ({ tasks, api }) => {

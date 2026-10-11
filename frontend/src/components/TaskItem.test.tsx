@@ -46,23 +46,36 @@ describe("TaskItem", () => {
     await userEvent.click(screen.getByRole("checkbox", { name: "Complete Write report" }));
     expect(onToggle).toHaveBeenCalledWith(task);
 
-    await userEvent.click(screen.getByRole("button", { name: "Write report" }));
+    await userEvent.click(screen.getByRole("button", { name: "Edit Write report" }));
     expect(onEdit).toHaveBeenCalledWith(task);
   });
 
-  it("opens the editor when any part of the row is clicked", async () => {
+  it("expands to show the description when the row is clicked, and collapses again", async () => {
     const onEdit = vi.fn();
-    const task = makeTask({ id: "1", title: "Write report", priority: "URGENT" });
+    const task = makeTask({ id: "1", title: "Write report", priority: "URGENT", description: "Q3 numbers\nand charts" });
     render(<ul><TaskItem task={task} onToggle={noop} onEdit={onEdit} onDelete={noop} /></ul>);
+    expect(screen.queryByTestId("task-details")).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByText("Urgent")); // the badge, not the title
-    expect(onEdit).toHaveBeenCalledTimes(1);
 
-    await userEvent.click(screen.getByRole("button", { name: "Write report" }));
-    expect(onEdit).toHaveBeenCalledTimes(2);
+    expect(screen.getByTestId("task-details")).toHaveTextContent("Q3 numbers and charts");
+    expect(screen.getByRole("button", { name: "Write report" })).toHaveAttribute("aria-expanded", "true");
+
+    await userEvent.click(screen.getByRole("button", { name: "Write report" })); // the title works too
+    expect(screen.queryByTestId("task-details")).not.toBeInTheDocument();
+    expect(onEdit).not.toHaveBeenCalled(); // expanding never opens the editor
   });
 
-  it("delete and checkbox act on their own without opening the editor", async () => {
+  it("says so when a task has no description", async () => {
+    const task = makeTask({ id: "1", title: "Write report", description: null });
+    render(<ul><TaskItem task={task} onToggle={noop} onEdit={noop} onDelete={noop} /></ul>);
+
+    await userEvent.click(screen.getByRole("button", { name: "Write report" }));
+
+    expect(screen.getByText("No description.")).toBeInTheDocument();
+  });
+
+  it("delete and checkbox act on their own without expanding or opening the editor", async () => {
     const onEdit = vi.fn();
     const onDelete = vi.fn();
     const onToggle = vi.fn();
@@ -75,6 +88,7 @@ describe("TaskItem", () => {
     expect(onDelete).toHaveBeenCalledWith(task);
     expect(onToggle).toHaveBeenCalledWith(task);
     expect(onEdit).not.toHaveBeenCalled();
+    expect(screen.queryByTestId("task-details")).not.toBeInTheDocument();
   });
 
   it("marks a finished task as Done", () => {

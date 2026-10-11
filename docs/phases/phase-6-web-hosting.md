@@ -67,11 +67,11 @@ Requested by the user while using the app; implemented as one change (migration 
 - **Starter categories:** only Personal, Ideas, Work for new accounts. Existing accounts keep what they have (decided: leave them, no data is removed).
 - **Category order:** `category.position`; `PUT /api/v1/categories/order`; drag handle in the sidebar (`@dnd-kit`, pointer + keyboard). New categories are appended. `position` is part of the category DTO and `/sync`.
 - **Home:** the old "All" entry is now called Home and shows every task of every category (Inbox included). Inbox stays as its own entry.
-- **Whole row clickable:** clicking anywhere on a task row opens the editor; the checkbox and delete icon do their own thing.
+- **Whole row clickable:** clicking anywhere on a task row expands it and shows the description ("No description." if empty); a second click collapses it. The pencil icon opens the editor; the checkbox and trash icon do their own thing. The Done label is a green pill.
 - **Done stays visible:** completing a task only sets its status to DONE. The default status filter is now "All" and finished tasks sort below the open ones of their priority group. Counts still show open tasks only.
 - **Delete icon and Bin:** the trash icon on a row (and Delete in the editor) moves the task to the bin (the existing soft delete). Bin view: `GET /tasks/bin`, restore with `POST /tasks/{id}/restore`, empty with `DELETE /tasks/bin` (UI asks to confirm). `GET /tasks/counts` also returns `bin`.
 - **Final deletion keeps a tombstone:** emptying the bin sets `purged_at` and wipes title, description, category, due date and completion time; the row (id, priority, status, timestamps, `deletedAt`) remains so `/sync` can still tell an offline device about the deletion. Purged tasks cannot be restored. Soft deletes that happened before this change appear in the bin the first time it is opened.
-- **Tests:** backend adds `TaskBinIT`, reorder cases in `CategoryApiIT`, service unit tests (73 unit/slice + 75 integration); frontend 51; e2e 47 (keyboard and pointer drag, bin, Home, row click).
+- **Tests:** backend adds `TaskBinIT`, reorder cases in `CategoryApiIT`, service unit tests (73 unit/slice + 75 integration); frontend 52; e2e 47 (keyboard and pointer drag, bin, Home, expand row, edit icon).
 
 ## Done when
 - A new user can register (with the invite code), log in on the hosted HTTPS URL, create tasks, reload, log out; a second user sees none of the first user's data.

@@ -84,7 +84,7 @@ The backend has no knowledge of any particular client. The web frontend and the 
 
 ## Frontend (v1 UI)
 - Left sidebar: **Home** (all tasks of all categories) and Inbox, then the user's categories with task counts (drag the handle to reorder), then **Bin**. Add, rename, recolor categories.
-- Main pane: task list sorted/grouped by priority, color-coded priority badges, overdue highlight, the whole row opens the editor, checkbox marks a task Done (it stays in the list, below the open ones), trash icon moves it to the bin
+- Main pane: task list sorted/grouped by priority, color-coded priority badges, overdue highlight, clicking a row expands it to show the description, the pencil icon opens the editor, checkbox marks a task Done (it stays in the list, below the open ones), trash icon moves it to the bin
 - Bin view: restore a task, or empty the bin (asks first; this is the final deletion)
 - Quick-add bar (title + priority + category), edit dialog for full details
 - Filters: status (open/done/all) and priority; sort selector

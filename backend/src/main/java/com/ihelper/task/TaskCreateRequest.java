@@ -11,7 +11,7 @@ public record TaskCreateRequest(
 		@Schema(description = "Client-generated UUID. Re-sending an existing id returns the existing task.")
 		UUID id,
 		@NotBlank @Size(max = 200) String title,
-		@Size(max = 5000) String description,
+		@Size(max = 5000) String notes,
 		@Schema(description = "Omit or null for Inbox") UUID categoryId,
 		@Schema(description = "Defaults to MEDIUM") Priority priority,
 		@Schema(description = "Defaults to TODO") TaskStatus status,

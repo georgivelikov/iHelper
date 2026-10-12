@@ -5,7 +5,7 @@ const NOW = "2026-03-01T10:00:00Z";
 
 export function makeTask(over: Partial<Task> & { id: string; title: string }): Task {
   return {
-    description: null,
+    notes: null,
     categoryId: null,
     priority: "MEDIUM",
     status: "TODO",

@@ -8,7 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(requiredProperties = { "id", "title", "priority", "status", "createdAt", "updatedAt", "version" })
 public record TaskDto(UUID id, String title,
-		@Schema(nullable = true) String description,
+		@Schema(nullable = true) String notes,
 		@Schema(nullable = true, description = "Null means Inbox") UUID categoryId,
 		Priority priority, TaskStatus status,
 		@Schema(nullable = true) LocalDate dueDate,
@@ -17,7 +17,7 @@ public record TaskDto(UUID id, String title,
 		@Schema(nullable = true, description = "Set when the task is in the bin (also reported by /sync)") Instant deletedAt) {
 
 	public static TaskDto from(Task t) {
-		return new TaskDto(t.getId(), t.getTitle(), t.getDescription(), t.getCategoryId(), t.getPriority(),
+		return new TaskDto(t.getId(), t.getTitle(), t.getNotes(), t.getCategoryId(), t.getPriority(),
 				t.getStatus(), t.getDueDate(), t.getCompletedAt(), t.getCreatedAt(), t.getUpdatedAt(),
 				t.getVersion(), t.getDeletedAt());
 	}

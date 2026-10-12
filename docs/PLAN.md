@@ -54,7 +54,7 @@ iHelper/
 ## Domain model (v1)
 - All entities: `id` (UUID), `createdAt`, `updatedAt`, `version`, `deletedAt`
 - **Category:** `name` (unique per owner), `color`, `position` (display order, set by drag-and-drop)
-- **Task:** `title` (required), `description` (optional), `categoryId` (FK, nullable = "Inbox"), `priority` enum `LOW | MEDIUM | HIGH | URGENT`, `status` enum `TODO | IN_PROGRESS | DONE`, `dueDate` (optional), `completedAt`
+- **Task:** `title` (required), `notes` (optional), `categoryId` (FK, nullable = "Inbox"), `priority` enum `LOW | MEDIUM | HIGH | URGENT`, `status` enum `TODO | IN_PROGRESS | DONE`, `dueDate` (optional), `completedAt`
 - Starter categories, created per user at registration (Phase 6): Personal, Ideas, Work (in that order)
 - **Bin:** deleting a task soft-deletes it (`deletedAt`), which puts it in the bin. Emptying the bin wipes the content and sets `purgedAt`; the row stays as a tombstone so `/sync` still reports the deletion.
 
@@ -84,7 +84,7 @@ The backend has no knowledge of any particular client. The web frontend and the 
 
 ## Frontend (v1 UI)
 - Left sidebar: **Home** (all tasks of all categories) and Inbox, then the user's categories with task counts (drag the handle to reorder), then **Bin**. Add, rename, recolor categories.
-- Main pane: task list sorted/grouped by priority, color-coded priority badges, overdue highlight, clicking a row expands it to show the description, the pencil icon opens the editor, checkbox marks a task Done (it stays in the list, below the open ones), trash icon moves it to the bin
+- Main pane: task list sorted/grouped by priority, color-coded priority badges, overdue highlight, clicking a row expands it to show the notes, the pencil icon opens the editor, checkbox marks a task Done (it stays in the list, below the open ones), trash icon moves it to the bin
 - Bin view: restore a task, or tick tasks (Select all for everything) and Delete selected; it always asks first and erasing is final. There is no separate "Empty bin" button.
 - Quick-add bar (title + priority + category), edit dialog for full details
 - Filters: status (open/done/all) and priority; sort selector

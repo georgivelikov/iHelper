@@ -79,8 +79,8 @@ describe("App", () => {
     expect(titles[1]).toContain("Finished low");
   });
 
-  it("clicking a row expands it with the description; the edit icon opens the editor", async () => {
-    setup([makeTask({ id: "t1", title: "Ship release", priority: "URGENT", description: "Tag it, then deploy" })]);
+  it("clicking a row expands it with the notes; the edit icon opens the editor", async () => {
+    setup([makeTask({ id: "t1", title: "Ship release", priority: "URGENT", notes: "Tag it, then deploy" })]);
     await screen.findByText("Ship release");
     expect(screen.queryByText("Tag it, then deploy")).not.toBeInTheDocument();
 

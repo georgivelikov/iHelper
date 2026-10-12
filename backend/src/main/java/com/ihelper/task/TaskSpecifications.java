@@ -33,7 +33,7 @@ final class TaskSpecifications {
 			if (filter.q() != null && !filter.q().isBlank()) {
 				String pattern = "%" + escapeLike(filter.q().trim().toLowerCase()) + "%";
 				predicates.add(cb.or(cb.like(cb.lower(root.get("title")), pattern, '\\'),
-						cb.like(cb.lower(root.get("description")), pattern, '\\')));
+						cb.like(cb.lower(root.get("notes")), pattern, '\\')));
 			}
 			return cb.and(predicates.toArray(Predicate[]::new));
 		};

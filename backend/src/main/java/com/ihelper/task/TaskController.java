@@ -55,7 +55,7 @@ public class TaskController {
 			@RequestParam(defaultValue = "false") boolean inbox,
 			@RequestParam(required = false) Priority priority,
 			@Parameter(description = "Repeatable: status=TODO&status=IN_PROGRESS") @RequestParam(required = false) Set<TaskStatus> status,
-			@Parameter(description = "Case-insensitive search in title and description") @RequestParam(required = false) String q,
+			@Parameter(description = "Case-insensitive search in title and notes") @RequestParam(required = false) String q,
 			@Parameter(description = "Comma separated fields, '-' prefix = descending, e.g. priority,-dueDate. "
 					+ "Fields: priority, dueDate, createdAt, updatedAt, title, status. Default: -priority,dueDate,createdAt")
 			@RequestParam(required = false) String sort,

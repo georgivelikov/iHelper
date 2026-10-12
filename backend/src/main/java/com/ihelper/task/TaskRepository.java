@@ -60,7 +60,7 @@ public interface TaskRepository extends JpaRepository<Task, UUID>, JpaSpecificat
 	@Modifying(flushAutomatically = true, clearAutomatically = true)
 	@Query("""
 			update Task t
-			   set t.title = '', t.description = null, t.categoryId = null, t.dueDate = null, t.completedAt = null,
+			   set t.title = '', t.notes = null, t.categoryId = null, t.dueDate = null, t.completedAt = null,
 			       t.purgedAt = :now, t.updatedAt = :now, t.version = t.version + 1
 			 where t.ownerId = :ownerId and t.deletedAt is not null and t.purgedAt is null
 			""")
@@ -70,7 +70,7 @@ public interface TaskRepository extends JpaRepository<Task, UUID>, JpaSpecificat
 	@Modifying(flushAutomatically = true, clearAutomatically = true)
 	@Query("""
 			update Task t
-			   set t.title = '', t.description = null, t.categoryId = null, t.dueDate = null, t.completedAt = null,
+			   set t.title = '', t.notes = null, t.categoryId = null, t.dueDate = null, t.completedAt = null,
 			       t.purgedAt = :now, t.updatedAt = :now, t.version = t.version + 1
 			 where t.ownerId = :ownerId and t.id in :ids and t.deletedAt is not null and t.purgedAt is null
 			""")

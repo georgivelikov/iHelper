@@ -50,9 +50,9 @@ describe("TaskItem", () => {
     expect(onEdit).toHaveBeenCalledWith(task);
   });
 
-  it("expands to show the description when the row is clicked, and collapses again", async () => {
+  it("expands to show the notes when the row is clicked, and collapses again", async () => {
     const onEdit = vi.fn();
-    const task = makeTask({ id: "1", title: "Write report", priority: "URGENT", description: "Q3 numbers\nand charts" });
+    const task = makeTask({ id: "1", title: "Write report", priority: "URGENT", notes: "Q3 numbers\nand charts" });
     render(<ul><TaskItem task={task} onToggle={noop} onEdit={onEdit} onDelete={noop} /></ul>);
     expect(screen.queryByTestId("task-details")).not.toBeInTheDocument();
 
@@ -66,13 +66,13 @@ describe("TaskItem", () => {
     expect(onEdit).not.toHaveBeenCalled(); // expanding never opens the editor
   });
 
-  it("says so when a task has no description", async () => {
-    const task = makeTask({ id: "1", title: "Write report", description: null });
+  it("says so when a task has no notes", async () => {
+    const task = makeTask({ id: "1", title: "Write report", notes: null });
     render(<ul><TaskItem task={task} onToggle={noop} onEdit={noop} onDelete={noop} /></ul>);
 
     await userEvent.click(screen.getByRole("button", { name: "Write report" }));
 
-    expect(screen.getByText("No description.")).toBeInTheDocument();
+    expect(screen.getByText("No notes.")).toBeInTheDocument();
   });
 
   it("delete and checkbox act on their own without expanding or opening the editor", async () => {

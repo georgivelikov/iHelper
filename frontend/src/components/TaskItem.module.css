@@ -63,12 +63,12 @@
   padding-top: 0.5rem;
   border-top: 1px solid var(--border);
 }
-.description {
+.notes {
   margin: 0;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-.noDescription {
+.noNotes {
   margin: 0;
   color: var(--muted);
   font-style: italic;

@@ -11,7 +11,7 @@ import jakarta.validation.constraints.Size;
 /** Full replacement: omitted optional fields are cleared. Use PATCH for partial updates. */
 public record TaskUpdateRequest(
 		@NotBlank @Size(max = 200) String title,
-		@Size(max = 5000) String description,
+		@Size(max = 5000) String notes,
 		@Schema(description = "Null moves the task to Inbox") UUID categoryId,
 		@NotNull Priority priority,
 		@NotNull TaskStatus status,

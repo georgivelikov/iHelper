@@ -86,7 +86,7 @@ class TaskBinIT extends AbstractIT {
 	void emptyingTheBinErasesContentButNotTheTombstone() throws InterruptedException {
 		String title = unique("secret-title");
 		String keep = createTask(Map.of("title", unique("keep")));
-		String gone = createTask(Map.of("title", title, "description", "private details"));
+		String gone = createTask(Map.of("title", title, "notes", "private details"));
 		api().delete("/api/v1/tasks/" + gone).then().statusCode(204);
 		String checkpoint = api().get("/api/v1/sync").then().extract().path("serverTime");
 		Thread.sleep(20);
@@ -103,13 +103,13 @@ class TaskBinIT extends AbstractIT {
 			.body("tasks[0].id", equalTo(gone))
 			.body("tasks[0].deletedAt", notNullValue())
 			.body("tasks[0].title", equalTo(""))
-			.body("tasks[0].description", nullValue());
+			.body("tasks[0].notes", nullValue());
 		api().delete("/api/v1/tasks/bin").then().statusCode(200).body("purged", equalTo(0));
 	}
 
 	@Test
 	void selectedTasksCanBeErasedWhileTheRestStayInTheBin() {
-		String erase = createTask(Map.of("title", unique("erase"), "description", "private"));
+		String erase = createTask(Map.of("title", unique("erase"), "notes", "private"));
 		String keep = createTask(Map.of("title", unique("keep")));
 		String live = createTask(Map.of("title", unique("live")));
 		api().delete("/api/v1/tasks/" + erase).then().statusCode(204);

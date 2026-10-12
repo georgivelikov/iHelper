@@ -8,7 +8,7 @@ export interface TaskSeed {
   status?: "TODO" | "IN_PROGRESS" | "DONE";
   categoryId?: string;
   dueDate?: string;
-  description?: string;
+  notes?: string;
 }
 
 export const PASSWORD = "correct-horse-battery";

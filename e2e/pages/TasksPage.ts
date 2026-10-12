@@ -116,14 +116,14 @@ export class TasksPage {
 
   async editTask(fields: {
     title?: string;
-    description?: string;
+    notes?: string;
     category?: string;
     priority?: Priority;
     dueDate?: string;
   }) {
     const d = this.dialog;
     if (fields.title !== undefined) await d.getByLabel("Title").fill(fields.title);
-    if (fields.description !== undefined) await d.getByLabel("Description").fill(fields.description);
+    if (fields.notes !== undefined) await d.getByLabel("Notes").fill(fields.notes);
     if (fields.category) await d.getByLabel("Category").selectOption({ label: fields.category });
     if (fields.priority) await d.getByLabel("Priority").selectOption({ label: fields.priority });
     if (fields.dueDate !== undefined) await d.getByLabel("Due date").fill(fields.dueDate);

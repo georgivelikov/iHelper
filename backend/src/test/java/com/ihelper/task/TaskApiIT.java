@@ -41,17 +41,17 @@ class TaskApiIT extends AbstractIT {
 	}
 
 	@Test
-	void searchMatchesTitleAndDescriptionIgnoringCase() {
+	void searchMatchesTitleAndNotesIgnoringCase() {
 		String needle = unique("needle");
 		String inTitle = createTask(task("About " + needle));
-		Map<String, Object> withDescription = task(unique("plain title"));
-		withDescription.put("description", "Remember the " + needle.toUpperCase() + " details");
-		String inDescription = createTask(withDescription);
+		Map<String, Object> withNotes = task(unique("plain title"));
+		withNotes.put("notes", "Remember the " + needle.toUpperCase() + " details");
+		String inNotes = createTask(withNotes);
 		createTask(task(unique("unrelated")));
 
 		api().queryParam("q", needle).get("/api/v1/tasks").then().statusCode(200)
 			.body("total", equalTo(2))
-			.body("items.id", containsInAnyOrder(inTitle, inDescription));
+			.body("items.id", containsInAnyOrder(inTitle, inNotes));
 	}
 
 	@Test
@@ -127,14 +127,14 @@ class TaskApiIT extends AbstractIT {
 	@Test
 	void patchExplicitNullClearsAndAbsentFieldsAreUntouched() {
 		Map<String, Object> body = task(unique("clear"));
-		body.put("description", "details");
+		body.put("notes", "details");
 		body.put("dueDate", "2030-01-15");
 		body.put("priority", "URGENT");
 		String id = createTask(body);
 
 		api().body("{\"dueDate\":null}").patch("/api/v1/tasks/" + id).then().statusCode(200)
 			.body("dueDate", nullValue())
-			.body("description", equalTo("details"))
+			.body("notes", equalTo("details"))
 			.body("priority", equalTo("URGENT"));
 	}
 
@@ -149,7 +149,7 @@ class TaskApiIT extends AbstractIT {
 
 	@Test
 	void validationErrorsAreProblemDetailsWithFieldErrors() {
-		api().body(Map.of("title", "", "description", "ok")).post("/api/v1/tasks").then().statusCode(400)
+		api().body(Map.of("title", "", "notes", "ok")).post("/api/v1/tasks").then().statusCode(400)
 			.contentType("application/problem+json")
 			.body("title", equalTo("Validation failed"))
 			.body("errors.field", hasItem("title"));

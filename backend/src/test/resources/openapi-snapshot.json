@@ -251,7 +251,7 @@
             "format" : "uuid",
             "type" : "string"
           },
-          "description" : {
+          "notes" : {
             "maxLength" : 5000,
             "minLength" : 0,
             "type" : "string"
@@ -304,7 +304,7 @@
             "format" : "date-time",
             "type" : [ "string", "null" ]
           },
-          "description" : {
+          "notes" : {
             "type" : [ "string", "null" ]
           },
           "dueDate" : {
@@ -345,7 +345,7 @@
             "format" : "uuid",
             "type" : "string"
           },
-          "description" : {
+          "notes" : {
             "type" : "string"
           },
           "dueDate" : {
@@ -393,7 +393,7 @@
             "format" : "uuid",
             "type" : "string"
           },
-          "description" : {
+          "notes" : {
             "maxLength" : 5000,
             "minLength" : 0,
             "type" : "string"

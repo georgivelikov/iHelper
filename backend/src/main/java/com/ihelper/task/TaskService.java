@@ -110,7 +110,7 @@ public class TaskService {
 		task.setId(id);
 		task.setOwnerId(owner);
 		task.setTitle(request.title().trim());
-		task.setDescription(request.description());
+		task.setNotes(request.notes());
 		task.setCategoryId(request.categoryId());
 		task.setPriority(request.priority() != null ? request.priority() : Priority.MEDIUM);
 		task.setDueDate(request.dueDate());
@@ -123,7 +123,7 @@ public class TaskService {
 		checkVersion(task, expectedVersion);
 		requireCategory(request.categoryId());
 		task.setTitle(request.title().trim());
-		task.setDescription(request.description());
+		task.setNotes(request.notes());
 		task.setCategoryId(request.categoryId());
 		task.setPriority(request.priority());
 		task.setDueDate(request.dueDate());
@@ -141,11 +141,11 @@ public class TaskService {
 			}
 			task.setTitle(v.title().trim());
 		}
-		if (patch.has("description")) {
-			if (v.description() != null && v.description().length() > 5000) {
-				throw new BadRequestException("description must be at most 5000 characters");
+		if (patch.has("notes")) {
+			if (v.notes() != null && v.notes().length() > 5000) {
+				throw new BadRequestException("notes must be at most 5000 characters");
 			}
-			task.setDescription(v.description());
+			task.setNotes(v.notes());
 		}
 		if (patch.has("categoryId")) {
 			requireCategory(v.categoryId());

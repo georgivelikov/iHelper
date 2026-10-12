@@ -23,7 +23,7 @@ public class Task extends BaseEntity {
 	private String title;
 
 	@Column(length = 5000)
-	private String description;
+	private String notes;
 
 	/** Null means Inbox. A plain id rather than an association: DTOs only ever need the id. */
 	@Column(name = "category_id")
@@ -63,12 +63,12 @@ public class Task extends BaseEntity {
 		this.title = title;
 	}
 
-	public String getDescription() {
-		return description;
+	public String getNotes() {
+		return notes;
 	}
 
-	public void setDescription(String description) {
-		this.description = description;
+	public void setNotes(String notes) {
+		this.notes = notes;
 	}
 
 	public UUID getCategoryId() {

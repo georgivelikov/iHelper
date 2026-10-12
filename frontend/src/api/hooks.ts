@@ -110,7 +110,7 @@ export interface TaskPatchInput {
   version: number;
   fields: {
     title?: string;
-    description?: string | null;
+    notes?: string | null;
     categoryId?: string | null;
     priority?: Priority;
     status?: TaskStatus;

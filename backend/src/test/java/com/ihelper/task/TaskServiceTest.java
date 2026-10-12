@@ -131,7 +131,7 @@ class TaskServiceTest {
 	@Test
 	void patchOnlyTouchesPresentFieldsAndExplicitNullClears() {
 		Task task = existing(TaskStatus.TODO);
-		task.setDescription("keep me");
+		task.setNotes("keep me");
 		task.setDueDate(LocalDate.of(2026, 5, 1));
 		task.setPriority(Priority.HIGH);
 		when(tasks.findByIdAndOwnerIdAndDeletedAtIsNull(task.getId(), OWNER)).thenReturn(Optional.of(task));
@@ -140,7 +140,7 @@ class TaskServiceTest {
 				patchOf("dueDate", new TaskPatchRequest(null, null, null, null, null, null, null)), null);
 
 		assertThat(dto.dueDate()).isNull();
-		assertThat(dto.description()).isEqualTo("keep me");
+		assertThat(dto.notes()).isEqualTo("keep me");
 		assertThat(dto.priority()).isEqualTo(Priority.HIGH);
 		assertThat(dto.title()).isEqualTo("existing");
 	}

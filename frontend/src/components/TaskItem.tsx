@@ -22,7 +22,7 @@ export function TaskItem({ task, category, onToggle, onEdit, onDelete }: Props) 
   const overdue = isOverdue(task.dueDate, task.status);
   const className = [styles.item, done ? styles.done : "", overdue ? styles.overdue : ""].join(" ");
 
-  // Clicking the row expands it to show the description. The title stays a real button (so the keyboard
+  // Clicking the row expands it to show the notes. The title stays a real button (so the keyboard
   // can toggle it; its click bubbles up to the row); the checkbox and the icons act on their own.
   return (
     <li className={className} data-priority={task.priority} data-overdue={overdue || undefined} onClick={() => setExpanded((open) => !open)}>
@@ -56,10 +56,10 @@ export function TaskItem({ task, category, onToggle, onEdit, onDelete }: Props) 
         </div>
         {expanded && (
           <div className={styles.details} data-testid="task-details">
-            {task.description?.trim() ? (
-              <p className={styles.description}>{task.description}</p>
+            {task.notes?.trim() ? (
+              <p className={styles.notes}>{task.notes}</p>
             ) : (
-              <p className={styles.noDescription}>No description.</p>
+              <p className={styles.noNotes}>No notes.</p>
             )}
           </div>
         )}

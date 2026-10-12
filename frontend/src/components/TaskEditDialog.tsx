@@ -18,7 +18,7 @@ interface Props {
 
 interface FormState {
   title: string;
-  description: string;
+  notes: string;
   categoryId: string;
   priority: Priority;
   status: TaskStatus;
@@ -28,7 +28,7 @@ interface FormState {
 function toForm(t: Task): FormState {
   return {
     title: t.title,
-    description: t.description ?? "",
+    notes: t.notes ?? "",
     categoryId: t.categoryId ?? "",
     priority: t.priority,
     status: t.status,
@@ -51,7 +51,7 @@ export function TaskEditDialog({ task, categories, saving, error, onSave, onDele
       version: base.version,
       fields: {
         title: form.title.trim(),
-        description: form.description.trim() || null,
+        notes: form.notes.trim() || null,
         categoryId: form.categoryId || null,
         priority: form.priority,
         status: form.status,
@@ -95,8 +95,8 @@ export function TaskEditDialog({ task, categories, saving, error, onSave, onDele
             <input value={form.title} maxLength={200} required onChange={(e) => set("title", e.target.value)} />
           </label>
           <label>
-            Description
-            <textarea rows={3} value={form.description} maxLength={5000} onChange={(e) => set("description", e.target.value)} />
+            Notes
+            <textarea rows={3} value={form.notes} maxLength={5000} onChange={(e) => set("notes", e.target.value)} />
           </label>
           <div className={styles.row}>
             <label>

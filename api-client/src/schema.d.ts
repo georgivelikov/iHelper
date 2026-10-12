@@ -404,7 +404,7 @@ export interface components {
              * @description Omit or null for Inbox
              */
             categoryId?: string;
-            description?: string;
+            notes?: string;
             /** Format: date */
             dueDate?: string;
             /**
@@ -439,7 +439,7 @@ export interface components {
              * @description Set when the task is in the bin (also reported by /sync)
              */
             deletedAt?: string | null;
-            description?: string | null;
+            notes?: string | null;
             /** Format: date */
             dueDate?: string | null;
             /** Format: uuid */
@@ -458,7 +458,7 @@ export interface components {
         TaskPatchRequest: {
             /** Format: uuid */
             categoryId?: string;
-            description?: string;
+            notes?: string;
             /** Format: date */
             dueDate?: string;
             /** @enum {string} */
@@ -481,7 +481,7 @@ export interface components {
              * @description Null moves the task to Inbox
              */
             categoryId?: string;
-            description?: string;
+            notes?: string;
             /** Format: date */
             dueDate?: string;
             /** @enum {string} */

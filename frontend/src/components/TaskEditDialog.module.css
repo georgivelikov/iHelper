@@ -41,6 +41,13 @@
 .form select {
   padding-right: 2rem;
 }
+/* Notes can grow taller by dragging, but never wider than the dialog (the default lets it break out). */
+.form textarea {
+  width: 100%;
+  min-height: 5rem;
+  max-height: 60vh;
+  resize: vertical;
+}
 .row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));

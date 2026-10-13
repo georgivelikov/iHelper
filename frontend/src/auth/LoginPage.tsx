@@ -42,7 +42,10 @@ export function LoginPage() {
   return (
     <main className={styles.page}>
       <form className={styles.card} onSubmit={submit}>
-        <h1>iHelper</h1>
+        <h1>
+          <img src="/logo.svg" alt="" width="32" height="32" />
+          iHelper
+        </h1>
         <h2>{registering ? "Create account" : "Sign in"}</h2>
 
         {error !== null && (

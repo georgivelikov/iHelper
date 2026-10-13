@@ -103,7 +103,10 @@ export function App({ user }: { user?: User }) {
   return (
     <div className={styles.layout}>
       <header className={styles.header}>
-        <h1>iHelper</h1>
+        <h1>
+          <img src="/logo.svg" alt="" width="32" height="32" />
+          iHelper
+        </h1>
         {user && (
           <div className={styles.account}>
             <span>{user.username}</span>

@@ -17,10 +17,10 @@ import com.ihelper.AbstractIT;
 class CategoryApiIT extends AbstractIT {
 
 	@Test
-	void newAccountStartsWithThreeCategoriesInOrder() {
+	void newAccountStartsWithFiveCategoriesInOrder() {
 		api().get("/api/v1/categories").then().statusCode(200)
-			.body("name", contains("Personal", "Ideas", "Work"))
-			.body("position", contains(0, 1, 2));
+			.body("name", contains("Personal", "Ideas", "Work", "Books", "Shopping"))
+			.body("position", contains(0, 1, 2, 3, 4));
 	}
 
 	@Test
@@ -29,8 +29,8 @@ class CategoryApiIT extends AbstractIT {
 		createCategory(name);
 
 		api().get("/api/v1/categories").then().statusCode(200)
-			.body("name", contains("Personal", "Ideas", "Work", name))
-			.body("position", contains(0, 1, 2, 3));
+			.body("name", contains("Personal", "Ideas", "Work", "Books", "Shopping", name))
+			.body("position", contains(0, 1, 2, 3, 4, 5));
 	}
 
 	@Test
@@ -42,18 +42,18 @@ class CategoryApiIT extends AbstractIT {
 
 		api().body(Map.of("ids", java.util.List.of(work, personal, ideas))).put("/api/v1/categories/order")
 			.then().statusCode(200)
-			.body("name", contains("Work", "Personal", "Ideas"));
+			.body("name", contains("Work", "Personal", "Ideas", "Books", "Shopping"));
 
 		api().get("/api/v1/categories").then().statusCode(200)
-			.body("name", contains("Work", "Personal", "Ideas"))
-			.body("position", contains(0, 1, 2));
+			.body("name", contains("Work", "Personal", "Ideas", "Books", "Shopping"))
+			.body("position", contains(0, 1, 2, 3, 4));
 
 		// Moving Work back to the end only has to touch what actually moved, and is idempotent.
 		api().body(Map.of("ids", java.util.List.of(personal, ideas, work))).put("/api/v1/categories/order")
 			.then().statusCode(200);
 		api().body(Map.of("ids", java.util.List.of(personal, ideas, work))).put("/api/v1/categories/order")
 			.then().statusCode(200)
-			.body("name", contains("Personal", "Ideas", "Work"));
+			.body("name", contains("Personal", "Ideas", "Work", "Books", "Shopping"));
 	}
 
 	@Test
@@ -62,7 +62,7 @@ class CategoryApiIT extends AbstractIT {
 
 		api().body(Map.of("ids", java.util.List.of(before.get(2)))).put("/api/v1/categories/order")
 			.then().statusCode(200)
-			.body("name", contains("Work", "Personal", "Ideas"));
+			.body("name", contains("Work", "Personal", "Ideas", "Books", "Shopping"));
 	}
 
 	@Test

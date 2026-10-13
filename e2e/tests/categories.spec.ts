@@ -1,11 +1,10 @@
 import { expect, test } from "../fixtures";
 
 test.describe("categories", () => {
-  test("a new account starts with Personal, Ideas and Work", async ({ tasks }) => {
+  test("a new account starts with Personal, Ideas, Work, Books and Shopping", async ({ tasks }) => {
     await tasks.goto();
 
-    await expect.poll(() => tasks.categoryOrder()).toEqual(["Personal", "Ideas", "Work"]);
-    await expect(tasks.category("Shopping")).toHaveCount(0);
+    await expect.poll(() => tasks.categoryOrder()).toEqual(["Personal", "Ideas", "Work", "Books", "Shopping"]);
   });
 
   test("Home shows the tasks of every category and of Inbox", async ({ tasks, api }) => {
@@ -29,25 +28,25 @@ test.describe("categories", () => {
 
   test("categories are reordered with the keyboard and the order persists", async ({ tasks, api }) => {
     await tasks.goto();
-    await expect.poll(() => tasks.categoryOrder()).toEqual(["Personal", "Ideas", "Work"]);
+    await expect.poll(() => tasks.categoryOrder()).toEqual(["Personal", "Ideas", "Work", "Books", "Shopping"]);
 
     await tasks.moveCategory("Work", -1);
 
-    await expect.poll(() => tasks.categoryOrder()).toEqual(["Personal", "Work", "Ideas"]);
-    await expect.poll(async () => (await api.listCategories()).map((c) => c.name)).toEqual(["Personal", "Work", "Ideas"]);
+    await expect.poll(() => tasks.categoryOrder()).toEqual(["Personal", "Work", "Ideas", "Books", "Shopping"]);
+    await expect.poll(async () => (await api.listCategories()).map((c) => c.name)).toEqual(["Personal", "Work", "Ideas", "Books", "Shopping"]);
     await tasks.page.reload();
-    await expect.poll(() => tasks.categoryOrder()).toEqual(["Personal", "Work", "Ideas"]);
+    await expect.poll(() => tasks.categoryOrder()).toEqual(["Personal", "Work", "Ideas", "Books", "Shopping"]);
   });
 
   test("categories are reordered by dragging", async ({ tasks, api, isMobile }) => {
     test.skip(isMobile, "the pointer drag is exercised on the desktop layout; touch uses the same sensor");
     await tasks.goto();
-    await expect.poll(() => tasks.categoryOrder()).toEqual(["Personal", "Ideas", "Work"]);
+    await expect.poll(() => tasks.categoryOrder()).toEqual(["Personal", "Ideas", "Work", "Books", "Shopping"]);
 
     await tasks.dragCategory("Personal", "Work");
 
-    await expect.poll(() => tasks.categoryOrder()).toEqual(["Ideas", "Work", "Personal"]);
-    await expect.poll(async () => (await api.listCategories()).map((c) => c.name)).toEqual(["Ideas", "Work", "Personal"]);
+    await expect.poll(() => tasks.categoryOrder()).toEqual(["Ideas", "Work", "Personal", "Books", "Shopping"]);
+    await expect.poll(async () => (await api.listCategories()).map((c) => c.name)).toEqual(["Ideas", "Work", "Personal", "Books", "Shopping"]);
   });
 
   test("create a category, add a task to it, rename it", async ({ tasks, api }) => {

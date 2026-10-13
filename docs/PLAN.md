@@ -55,7 +55,7 @@ iHelper/
 - All entities: `id` (UUID), `createdAt`, `updatedAt`, `version`, `deletedAt`
 - **Category:** `name` (unique per owner), `color`, `position` (display order, set by drag-and-drop)
 - **Task:** `title` (required), `notes` (optional), `categoryId` (FK, nullable = "Inbox"), `priority` enum `LOW | MEDIUM | HIGH | URGENT`, `status` enum `TODO | IN_PROGRESS | DONE`, `dueDate` (optional), `completedAt`
-- Starter categories, created per user at registration (Phase 6): Personal, Ideas, Work (in that order)
+- Starter categories, created per user at registration (Phase 6): Personal, Ideas, Work, Books, Shopping (in that order)
 - **Bin:** deleting a task soft-deletes it (`deletedAt`), which puts it in the bin. Emptying the bin wipes the content and sets `purgedAt`; the row stays as a tombstone so `/sync` still reports the deletion.
 
 ## REST API (`/api/v1`): one API for web and mobile

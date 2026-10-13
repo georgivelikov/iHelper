@@ -22,7 +22,7 @@ test.describe("accounts", () => {
 
     await auth.register(username, PASSWORD, process.env.E2E_INVITE_CODE ?? "");
     await auth.expectSignedInAs(username);
-    await expect.poll(() => tasks.categoryOrder()).toEqual(["Personal", "Ideas", "Work"]);
+    await expect.poll(() => tasks.categoryOrder()).toEqual(["Personal", "Ideas", "Work", "Books", "Shopping"]);
 
     await auth.signOut();
     await auth.expectSignedOut();

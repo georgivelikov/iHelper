@@ -44,8 +44,8 @@ class AuthApiIT extends AbstractIT {
 			.get("/api/v1/categories")
 			.then()
 			.statusCode(200)
-			.body("name", contains("Personal", "Ideas", "Work"))
-			.body("$", hasSize(3));
+			.body("name", contains("Personal", "Ideas", "Work", "Books", "Shopping"))
+			.body("$", hasSize(5));
 	}
 
 	private static io.restassured.specification.RequestSpecification given(String token) {

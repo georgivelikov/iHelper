@@ -64,7 +64,7 @@ iHelper reachable on the internet over HTTPS, with real accounts, running from t
 
 ## Follow-up changes (after the Phase 6 review)
 Requested by the user while using the app; implemented as one change (migration `V3`).
-- **Starter categories:** only Personal, Ideas, Work for new accounts. Existing accounts keep what they have (decided: leave them, no data is removed).
+- **Starter categories:** Personal, Ideas, Work, Books, Shopping for new accounts (Books and Shopping added later; migration `V5` gave them to existing accounts that lacked them). Existing accounts keep what they have (decided: leave them, no data is removed).
 - **Category order:** `category.position`; `PUT /api/v1/categories/order`; drag handle in the sidebar (`@dnd-kit`, pointer + keyboard). New categories are appended. `position` is part of the category DTO and `/sync`.
 - **Home:** the old "All" entry is now called Home and shows every task of every category (Inbox included). Inbox stays as its own entry.
 - **Whole row clickable:** clicking anywhere on a task row expands it and shows the notes ("No notes." if empty); a second click collapses it. The pencil icon opens the editor; the checkbox and trash icon do their own thing. The Done label is a green pill.

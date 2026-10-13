@@ -34,7 +34,8 @@ public class AuthService {
 
 	/** In display order; more can be added (and all reordered) by the user. */
 	private static final List<Seed> STARTER_CATEGORIES = List.of(new Seed("Personal", "#6366f1"),
-			new Seed("Ideas", "#ec4899"), new Seed("Work", "#0ea5e9"));
+			new Seed("Ideas", "#ec4899"), new Seed("Work", "#0ea5e9"), new Seed("Books", "#f59e0b"),
+			new Seed("Shopping", "#10b981"));
 
 	private final UserRepository users;
 

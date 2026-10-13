@@ -9,8 +9,7 @@
   min-width: 0;
 }
 .form input,
-.form select,
-.form button {
+.form select {
   padding: 0.5rem 0.6rem;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -18,13 +17,4 @@
 }
 .form select {
   padding-right: 2rem;
-}
-.form button {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-}
-.form button:disabled {
-  opacity: 0.5;
-  cursor: default;
 }

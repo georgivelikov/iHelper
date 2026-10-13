@@ -181,7 +181,10 @@ export function CategorySidebar({
       <form className={styles.add} onSubmit={add}>
         <input aria-label="New category name" placeholder="New category" value={newName} maxLength={100} onChange={(e) => setNewName(e.target.value)} />
         <input type="color" aria-label="New category color" value={newColor} onChange={(e) => setNewColor(e.target.value)} />
-        <button type="submit" disabled={!newName.trim()}>
+        <button type="submit" className="primary-button" disabled={!newName.trim()}>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
           Add category
         </button>
       </form>

@@ -34,6 +34,37 @@ button {
   cursor: pointer;
 }
 
+/* The primary "Add" action: a compact filled accent pill with a leading "+" icon (task and category forms). */
+.primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background-color 0.15s, border-color 0.15s, opacity 0.15s;
+}
+.primary-button:hover:not(:disabled) {
+  background: #4338ca;
+  border-color: #4338ca;
+}
+.primary-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.primary-button:active:not(:disabled) {
+  background: #3730a3;
+}
+.primary-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* One dropdown look everywhere: our own chevron with room on the right, instead of the native arrow
    that sits flush against the edge. Components add right padding (2rem) so text never runs under it. */
 select {

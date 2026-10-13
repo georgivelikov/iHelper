@@ -88,8 +88,7 @@
 }
 .editor input,
 .add input,
-.editor button,
-.add button {
+.editor button {
   padding: 0.35rem 0.5rem;
   border: 1px solid var(--border);
   border-radius: 6px;

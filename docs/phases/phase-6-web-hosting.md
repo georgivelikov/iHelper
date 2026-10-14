@@ -1,6 +1,6 @@
 # Phase 6: Web hosting
 
-**Status:** Steps 1-5 done (awaiting review). Step 6: provider chosen (**Fly.io**, region `fra`, own domain); `fly.toml`, Deploy workflow and runbook commands are written. The first deploy crash-looped (no `prod` profile or `DB_URL` set); next is creating the Postgres app and setting secrets (see "First-time setup on Fly" in `docs/RUNBOOK.md`).
+**Status:** Steps 1-5 done (awaiting review). Step 6: provider chosen (**Fly.io**, region `fra`, own domain); `fly.toml`, Deploy workflow and runbook commands are written. The first deploy crash-looped (no `prod` profile or `DB_URL` set); the Postgres app `ihelper-db` now exists; next is creating the `ihelper` database/role, setting secrets and deploying (see "First-time setup on Fly" in `docs/RUNBOOK.md`).
 
 ## Goal
 iHelper reachable on the internet over HTTPS, with real accounts, running from the same Docker image as Phase 5. Prerequisite for the mobile app (Phase 7).

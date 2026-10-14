@@ -10,12 +10,12 @@ fly postgres create --name ihelper-db --region fra --initial-cluster-size 1 --vm
 fly postgres connect -a ihelper-db      # then: CREATE DATABASE ihelper; CREATE USER ihelper WITH PASSWORD '...';
                                         #       ALTER DATABASE ihelper OWNER TO ihelper;
 fly secrets set -a ihelper \
-  IHELPER_JWT_SECRET="$(openssl rand -base64 48)" IHELPER_INVITE_CODE="<code>" \
-  DB_URL="jdbc:postgresql://ihelper-db.flycast:5432/ihelper" DB_USER=ihelper DB_PASSWORD="<password>"
+  IHELPER_JWT_SECRET="$(openssl rand -base64 48)" IHELPER_INVITE_CODE="<code>" DB_PASSWORD="<password>"
 fly deploy
 ```
 
-`SPRING_PROFILES_ACTIVE=prod` and `IHELPER_REGISTRATION=invite` are in `fly.toml`. Do not use
+`SPRING_PROFILES_ACTIVE`, `IHELPER_REGISTRATION`, `DB_URL` and `DB_USER` are in `fly.toml`; only the password and
+the other secrets are set with `fly secrets`. Port 5432 is Fly's proxy port (use it); Postgres itself is on 5433. Do not use
 `fly postgres attach`: it injects a `postgres://` `DATABASE_URL`, which the app does not read.
 
 ## Configuration (environment variables of the `prod` profile)

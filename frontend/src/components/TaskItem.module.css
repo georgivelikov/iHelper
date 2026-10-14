@@ -73,9 +73,11 @@
   color: var(--muted);
   font-style: italic;
 }
+/* Overdue: red border all round with a soft red glow. Placed after :hover so it wins there too. */
 .item.overdue {
-  border-left-color: var(--danger);
-  background: #fff6f5;
+  border-color: #e60012;
+  background: #fff5f6;
+  box-shadow: 0 0 0 1px #e60012, 0 0 10px 1px rgba(230, 0, 18, 0.5);
 }
 .done .title {
   text-decoration: line-through;

@@ -10,7 +10,7 @@ primary_region = "fra"
   SPRING_PROFILES_ACTIVE = "prod"
   IHELPER_REGISTRATION = "invite"
   # Self-run Fly Postgres (app ihelper-db). Only DB_PASSWORD is a secret.
-  DB_URL = "jdbc:postgresql://ihelper-db.flycast:5432/ihelper"
+  DB_URL = "jdbc:postgresql://ihelper-db.flycast:5432/ihelper?sslmode=disable"
   DB_USER = "ihelper"
 
 [http_service]

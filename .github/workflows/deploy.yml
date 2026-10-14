@@ -1,0 +1,26 @@
+name: Deploy
+
+# Manual deploy to Fly.io. Needs the repository secret FLY_API_TOKEN (`fly tokens create deploy -a ihelper`).
+# App secrets (JWT, invite code, DB) live in Fly, set with `fly secrets set`.
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Commit SHA, tag or branch to deploy
+        default: main
+        required: true
+
+concurrency: deploy
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Deploy (remote build from the Dockerfile)
+        run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

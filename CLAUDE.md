@@ -4,7 +4,7 @@ Personal TODO app for one user (Georgi). Tasks live in **categories** and have *
 Roadmap: **local first → hosted web app → mobile app**. Preferred tech: **Java + TypeScript**.
 
 ## Current status
-**Phase 5 (Packaging) done, awaiting user review. v1 (Phases 1-5) is complete.** **Phase 6 (multi-user auth, prod profile, runbook) code is done, awaiting user review; actually hosting it needs the user to pick a provider/budget** (see `docs/phases/phase-6-web-hosting.md`, `docs/RUNBOOK.md`). Spring Boot is 4.1.1 (Initializr no longer offers 3.x). After the Phase 6 review the user asked for UI/API fixes (3 starter categories, drag-ordered categories, Home view, clickable rows, Done stays visible, Bin); they are implemented and tested, awaiting review (see "Follow-up changes" in `docs/phases/phase-6-web-hosting.md`).
+**Phase 5 (Packaging) done, awaiting user review. v1 (Phases 1-5) is complete.** **Phase 6 (multi-user auth, prod profile, runbook) code is done, awaiting user review; hosting provider is Fly.io (config in `fly.toml`), first deploy pending Postgres + secrets** (see `docs/phases/phase-6-web-hosting.md`, `docs/RUNBOOK.md`). Spring Boot is 4.1.1 (Initializr no longer offers 3.x). After the Phase 6 review the user asked for UI/API fixes (3 starter categories, drag-ordered categories, Home view, clickable rows, Done stays visible, Bin); they are implemented and tested, awaiting review (see "Follow-up changes" in `docs/phases/phase-6-web-hosting.md`).
 Update this line whenever a phase starts or finishes.
 
 ## Where things are

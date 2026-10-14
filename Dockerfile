@@ -20,5 +20,5 @@ RUN useradd --system --uid 10001 ihelper
 USER ihelper
 COPY --from=build /ihelper.jar /app/ihelper.jar
 EXPOSE 8080
-ENV JAVA_TOOL_OPTIONS="-Duser.timezone=UTC"
+ENV JAVA_TOOL_OPTIONS="-Duser.timezone=UTC -XX:MaxRAMPercentage=70"
 ENTRYPOINT ["java", "-jar", "/app/ihelper.jar"]

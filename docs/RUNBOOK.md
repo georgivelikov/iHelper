@@ -1,7 +1,22 @@
 # iHelper runbook
 
-Operations for the hosted app. Provider-neutral: the app is one Docker image plus a PostgreSQL database.
-Commands that depend on the hosting provider are marked **(provider)**; fill them in when the host is chosen.
+Operations for the hosted app: one Docker image plus a PostgreSQL database, hosted on **Fly.io** (app `ihelper`,
+region `fra`, config in `fly.toml`, database app `ihelper-db`). Commands marked **(provider)** are Fly commands.
+
+## First-time setup on Fly (provider)
+
+```
+fly postgres create --name ihelper-db --region fra --initial-cluster-size 1 --vm-size shared-cpu-1x --volume-size 1
+fly postgres connect -a ihelper-db      # then: CREATE DATABASE ihelper; CREATE USER ihelper WITH PASSWORD '...';
+                                        #       ALTER DATABASE ihelper OWNER TO ihelper;
+fly secrets set -a ihelper \
+  IHELPER_JWT_SECRET="$(openssl rand -base64 48)" IHELPER_INVITE_CODE="<code>" \
+  DB_URL="jdbc:postgresql://ihelper-db.flycast:5432/ihelper" DB_USER=ihelper DB_PASSWORD="<password>"
+fly deploy
+```
+
+`SPRING_PROFILES_ACTIVE=prod` and `IHELPER_REGISTRATION=invite` are in `fly.toml`. Do not use
+`fly postgres attach`: it injects a `postgres://` `DATABASE_URL`, which the app does not read.
 
 ## Configuration (environment variables of the `prod` profile)
 
@@ -29,14 +44,16 @@ Nothing else under `/actuator` is exposed.
 
 1. Merge to `main`. CI runs backend, frontend and e2e jobs; when all pass it publishes
    `ghcr.io/<owner>/ihelper:<commit-sha>` and `:latest`.
-2. Roll the host to the SHA tag **(provider)**. Flyway runs pending migrations at startup.
+2. Deploy **(provider)**: run the **Deploy** workflow in GitHub Actions (input: commit SHA), or locally
+   `fly deploy` from a clean checkout of that commit. Flyway runs pending migrations at startup.
 3. Check `/actuator/health`, then sign in.
 
-Prefer deploying a SHA tag over `latest`, so every deploy is reproducible and rollback is a tag change.
+Always deploy a specific commit, so every deploy is reproducible and rollback is redeploying an older commit.
 
 ## Roll back
 
-1. Redeploy the previous SHA tag **(provider)**.
+1. Redeploy the previous commit **(provider)**: Deploy workflow with the old SHA, or `fly releases -a ihelper`
+   and `fly deploy --image <image from that release>`.
 2. Migrations are forward-only. A rollback across a migration needs a **restore** (below) or a compensating
    migration, so keep migrations backwards compatible for one release (add columns before using them).
 
@@ -59,7 +76,10 @@ To force everyone to sign in again, also run: `UPDATE refresh_token SET revoked_
 ## Backups
 
 Production needs **daily** backups with at least 7 days of retention, kept off the database host.
-Use the provider's managed backups where available **(provider)**, and/or a scheduled logical dump:
+On Fly **(provider)** the self-run Postgres gets daily volume snapshots (`fly volumes list -a ihelper-db`,
+`fly volumes snapshots list <volume-id>`), which are short-lived and live on the same platform, so also take a
+logical dump regularly and keep it elsewhere (`fly proxy 15432:5432 -a ihelper-db`, then `pg_dump` against
+`localhost:15432`):
 
 ```
 pg_dump --format=custom --no-owner --file=ihelper-$(date +%F).dump "$DB_URL_WITHOUT_JDBC_PREFIX"
@@ -89,8 +109,9 @@ To restore for real: stop the app, restore into a new database, point `DB_URL` a
 
 ## Add a custom domain
 
-1. Add the domain at the provider and create the DNS records it asks for **(provider)**; HTTPS certificates are
-   issued by the platform.
+1. `fly certs add <host> -a ihelper`, then create the DNS records `fly certs show <host> -a ihelper` asks for
+   **(provider)** (CNAME to `ihelper.fly.dev` for a subdomain; A and AAAA for an apex domain). Fly issues and
+   renews the HTTPS certificate; wait until `fly certs show` says it is issued.
 2. Nothing in the app needs to change: the UI and API share one origin, cookies are host-only.
 3. Only if a **separate** web origin is ever used, set `IHELPER_CORS_ORIGINS` to it.
 

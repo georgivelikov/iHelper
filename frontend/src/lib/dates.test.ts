@@ -1,4 +1,4 @@
-import { isOverdue, todayIso } from "./dates";
+import { isDueOrOverdue, isOverdue, todayIso } from "./dates";
 
 describe("todayIso", () => {
   it("formats the local date with zero padding", () => {
@@ -12,6 +12,13 @@ describe("isOverdue", () => {
   it("is true for an open task due before today", () => {
     expect(isOverdue("2026-03-09", "TODO", today)).toBe(true);
     expect(isOverdue("2026-03-09", "IN_PROGRESS", today)).toBe(true);
+  });
+
+  it("glows for today as well as past dates", () => {
+    expect(isDueOrOverdue("2026-03-10", "TODO", today)).toBe(true);
+    expect(isDueOrOverdue("2026-03-09", "TODO", today)).toBe(true);
+    expect(isDueOrOverdue("2026-03-11", "TODO", today)).toBe(false);
+    expect(isDueOrOverdue("2026-03-10", "DONE", today)).toBe(false);
   });
 
   it("is false for today, the future, no date, or a finished task", () => {

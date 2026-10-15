@@ -10,3 +10,8 @@ export function todayIso(now: Date = new Date()): string {
 export function isOverdue(dueDate: string | null | undefined, status: string, today: string = todayIso()): boolean {
   return !!dueDate && status !== "DONE" && dueDate < today;
 }
+
+/** Overdue, or due today: the cases that should glow red. */
+export function isDueOrOverdue(dueDate: string | null | undefined, status: string, today: string = todayIso()): boolean {
+  return !!dueDate && status !== "DONE" && dueDate <= today;
+}

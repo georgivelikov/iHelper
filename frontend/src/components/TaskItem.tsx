@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Category, Task } from "@ihelper/api-client";
-import { isOverdue } from "../lib/dates";
+import { isDueOrOverdue, isOverdue } from "../lib/dates";
 import { PriorityBadge } from "./PriorityBadge";
 import styles from "./TaskItem.module.css";
 
@@ -19,7 +19,8 @@ const stop = (e: { stopPropagation: () => void }) => e.stopPropagation();
 export function TaskItem({ task, category, onToggle, onEdit, onDelete }: Props) {
   const [expanded, setExpanded] = useState(false);
   const done = task.status === "DONE";
-  const overdue = isOverdue(task.dueDate, task.status);
+  const overdue = isDueOrOverdue(task.dueDate, task.status);
+  const pastDue = isOverdue(task.dueDate, task.status);
   const className = [styles.item, done ? styles.done : "", overdue ? styles.overdue : ""].join(" ");
 
   // Clicking the row expands it to show the notes. The title stays a real button (so the keyboard
@@ -49,7 +50,7 @@ export function TaskItem({ task, category, onToggle, onEdit, onDelete }: Props) 
           )}
           {task.dueDate && (
             <span className={overdue ? styles.dueOverdue : styles.due}>
-              {overdue ? "Overdue · " : "Due "}
+              {pastDue ? "Overdue · " : overdue ? "Due today · " : "Due "}
               {task.dueDate}
             </span>
           )}
